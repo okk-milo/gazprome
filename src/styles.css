@@ -1192,16 +1192,15 @@ h1 {
   }
 
   .decision-panel {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px 12px;
     padding: 21px 18px;
     border-radius: 23px;
   }
 
   .decision-panel__score {
-    position: absolute;
-    top: 20px;
-    right: 18px;
+    position: static;
+    align-self: start;
   }
 
   .decision-panel__score strong {
@@ -1209,7 +1208,12 @@ h1 {
   }
 
   .decision-panel__signal {
-    padding-right: 82px;
+    padding-right: 0;
+  }
+
+  .decision-panel__summary,
+  .decision-panel__recommendation {
+    grid-column: 1 / -1;
   }
 
   .section-card {
