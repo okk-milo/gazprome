@@ -6,20 +6,24 @@ import EvidenceList from '../components/EvidenceList.vue'
 import LineChart from '../components/LineChart.vue'
 import SectionCard from '../components/SectionCard.vue'
 import TranscriptPanel from '../components/TranscriptPanel.vue'
+import { antifraudFallbackData } from '../data/antifraud'
 import { getAntifraudAnalysis, type ApiAntifraudSnapshot } from '../services/antifraud-api'
 import { createAntifraudPresentation } from '../services/antifraud-presentation'
 import { antifraudOutcomePresentation } from '../types/analysis'
 
 const pollingIntervalMs = 3_000
-const defaultAnalysisId = 'ad78fce9-fd72-49a6-a6bc-e4a85f5dc0ee'
 const analysisId = readAnalysisIdFromUrl()
 const snapshot = ref<ApiAntifraudSnapshot | null>(null)
-const isLoading = ref(true)
+const isLoading = ref(analysisId.length > 0)
 const errorMessage = ref<string | null>(null)
 let activeRequest: AbortController | null = null
 let pollingTimer: number | undefined
 
 const analysis = computed(() => {
+  if (!analysisId) {
+    return antifraudFallbackData
+  }
+
   if (!snapshot.value) {
     return null
   }
@@ -164,19 +168,13 @@ function isAbortError(error: unknown): boolean {
 
 function readAnalysisIdFromUrl(): string {
   const url = new URL(window.location.href)
-  const requestedAnalysisId = url.searchParams.get('analysisId')?.trim()
-
-  if (requestedAnalysisId) {
-    return requestedAnalysisId
-  }
-
-  url.searchParams.set('analysisId', defaultAnalysisId)
-  window.history.replaceState(null, '', url)
-  return defaultAnalysisId
+  return url.searchParams.get('analysisId')?.trim() ?? ''
 }
 
 onMounted(() => {
-  void loadAnalysis()
+  if (analysisId) {
+    void loadAnalysis()
+  }
 })
 
 onUnmounted(() => {
