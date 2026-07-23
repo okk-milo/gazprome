@@ -1167,6 +1167,31 @@ h1 {
 
 }
 
+@media (max-width: 900px) {
+  .decision-panel {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px 12px;
+  }
+
+  .decision-panel__score {
+    position: static;
+    align-self: start;
+  }
+
+  .decision-panel__score strong {
+    font-size: 31px;
+  }
+
+  .decision-panel__signal {
+    padding-right: 0;
+  }
+
+  .decision-panel__summary,
+  .decision-panel__recommendation {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 720px) {
   .app-shell {
     padding: 18px 14px 24px;
@@ -1192,28 +1217,8 @@ h1 {
   }
 
   .decision-panel {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 16px 12px;
     padding: 21px 18px;
     border-radius: 23px;
-  }
-
-  .decision-panel__score {
-    position: static;
-    align-self: start;
-  }
-
-  .decision-panel__score strong {
-    font-size: 31px;
-  }
-
-  .decision-panel__signal {
-    padding-right: 0;
-  }
-
-  .decision-panel__summary,
-  .decision-panel__recommendation {
-    grid-column: 1 / -1;
   }
 
   .section-card {
