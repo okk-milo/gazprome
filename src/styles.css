@@ -223,6 +223,10 @@ h1 {
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "signal score"
+    "summary summary"
+    "recommendation recommendation";
   gap: 18px 32px;
   overflow: hidden;
   padding: 26px 28px;
@@ -263,6 +267,7 @@ h1 {
 }
 
 .decision-panel__signal {
+  grid-area: signal;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -310,6 +315,7 @@ h1 {
 }
 
 .decision-panel__score {
+  grid-area: score;
   z-index: 1;
   display: flex;
   align-items: baseline;
@@ -341,8 +347,14 @@ h1 {
   line-height: 1.55;
 }
 
+.decision-panel__summary {
+  grid-area: summary;
+}
+
 .decision-panel__recommendation {
-  align-self: end;
+  grid-area: recommendation;
+  width: 100%;
+  max-width: none;
   padding: 14px 16px;
   border: 1px solid rgba(36, 36, 43, 0.08);
   border-radius: 16px;
@@ -1186,10 +1198,6 @@ h1 {
     padding-right: 0;
   }
 
-  .decision-panel__summary,
-  .decision-panel__recommendation {
-    grid-column: 1 / -1;
-  }
 }
 
 @media (max-width: 720px) {
