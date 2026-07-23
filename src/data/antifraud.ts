@@ -120,6 +120,27 @@ export const antifraudFallbackData: AntifraudAnalysis = {
       timestamp: '00:37',
       text: 'Ну, чтобы задекларировать на резервном счёте. Как мне сказали.',
     },
+    {
+      id: 'operator-explanation',
+      speaker: 'Оператор',
+      role: 'operator',
+      timestamp: '00:44',
+      text: 'Банк не просит переводить средства на резервный счёт. Я оставлю операцию приостановленной и зафиксирую обращение.',
+    },
+    {
+      id: 'client-acknowledgement',
+      speaker: 'Клиент',
+      role: 'client',
+      timestamp: '00:53',
+      text: 'Понял. Тогда я ничего переводить не буду и уточню информацию самостоятельно.',
+    },
+    {
+      id: 'operator-closing',
+      speaker: 'Оператор',
+      role: 'operator',
+      timestamp: '00:59',
+      text: 'Хорошо. Операция останется приостановленной до вашего следующего обращения.',
+    },
   ],
   evidence: [
     {
