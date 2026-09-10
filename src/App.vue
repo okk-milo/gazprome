@@ -21,6 +21,7 @@ const selectedFile = ref<File | null>(null)
 const activeCall = ref<CallSnapshot | null>(null)
 const isLoading = ref(true)
 const isUploading = ref(false)
+const isFileDragging = ref(false)
 const errorMessage = ref<string | null>(null)
 let pollingTimer: ReturnType<typeof setInterval> | null = null
 
@@ -52,7 +53,25 @@ onBeforeUnmount(stopPolling)
 
 function onFileChange(event: Event): void {
   const input = event.target
-  if (input instanceof HTMLInputElement) selectedFile.value = input.files?.[0] ?? null
+  setSelectedFile(input instanceof HTMLInputElement ? (input.files?.[0] ?? null) : null)
+}
+
+function onFileDrop(event: DragEvent): void {
+  event.preventDefault()
+  isFileDragging.value = false
+  setSelectedFile(event.dataTransfer?.files[0] ?? null)
+}
+
+function setSelectedFile(file: File | null): void {
+  if (!file) return
+
+  if (file.type && !file.type.startsWith('audio/')) {
+    errorMessage.value = 'Для анализа подходит аудиофайл.'
+    return
+  }
+
+  errorMessage.value = null
+  selectedFile.value = file
 }
 
 async function addEmployee(): Promise<void> {
@@ -123,6 +142,11 @@ function formatTime(milliseconds: number): string {
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} КБ`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`
+}
+
 function highlightPieces(segment: TranscriptSegment): Array<{ text: string; highlighted: boolean }> {
   const range = segment.highlightRanges[0]
   if (!range) return [{ text: segment.text, highlighted: false }]
@@ -146,20 +170,86 @@ function readError(error: unknown): string {
     </header>
 
     <section class="upload-card" aria-labelledby="upload-title">
-      <div><h2 id="upload-title">Загрузить звонок</h2><p>Запись будет связана с выбранной сделкой и обработана в защищённом контуре.</p></div>
-      <div class="upload-grid">
-        <label><span>Сотрудник</span><select v-model="selectedEmployeeId" :disabled="isLoading || isUploading"><option v-for="employee in employees" :key="employee.id" :value="employee.id">{{ employee.name }}</option></select></label>
-        <button class="secondary-button" type="button" :disabled="isLoading || isUploading" @click="addEmployee">Новый сотрудник</button>
-        <label><span>Сделка</span><select v-model="selectedDealId" :disabled="isLoading || isUploading"><option v-for="deal in deals" :key="deal.id" :value="deal.id">{{ deal.title }}</option></select></label>
-        <label class="file-input"><span>Аудиозапись</span><input accept="audio/*" type="file" :disabled="isUploading" @change="onFileChange" /><small>{{ selectedFile?.name ?? 'Файл не выбран' }}</small></label>
-        <button class="primary-button" type="button" :disabled="isLoading || isUploading" @click="uploadCall">{{ isUploading ? 'Загружаем…' : 'Запустить анализ' }}</button>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Новая проверка</p>
+          <h2 id="upload-title">Загрузить звонок</h2>
+          <p>Выберите сотрудника и сделку — результат появится на этой странице.</p>
+        </div>
+        <span class="step-label">Шаг 1 из 2</span>
+      </div>
+
+      <div class="upload-workspace">
+        <div class="upload-fields">
+          <label class="field-control">
+            <span>Сотрудник</span>
+            <div class="employee-picker">
+              <select v-model="selectedEmployeeId" :disabled="isLoading || isUploading">
+                <option v-for="employee in employees" :key="employee.id" :value="employee.id">{{ employee.name }}</option>
+              </select>
+              <button class="add-employee-button" type="button" :disabled="isLoading || isUploading" @click="addEmployee">
+                <span aria-hidden="true">+</span> Новый сотрудник
+              </button>
+            </div>
+          </label>
+
+          <label class="field-control">
+            <span>Сделка</span>
+            <select v-model="selectedDealId" :disabled="isLoading || isUploading">
+              <option v-for="deal in deals" :key="deal.id" :value="deal.id">{{ deal.title }}</option>
+            </select>
+          </label>
+        </div>
+
+        <label
+          class="file-dropzone"
+          :class="{ 'file-dropzone--active': isFileDragging, 'file-dropzone--selected': selectedFile }"
+          @dragenter.prevent="isFileDragging = true"
+          @dragover.prevent="isFileDragging = true"
+          @dragleave.prevent="isFileDragging = false"
+          @drop="onFileDrop"
+        >
+          <input class="visually-hidden" accept="audio/*" type="file" :disabled="isUploading" @change="onFileChange" />
+          <span class="file-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 18V6l9-2v12"/><path d="M9 9l9-2"/><circle cx="6" cy="18" r="3"/><circle cx="15" cy="16" r="3"/></svg>
+          </span>
+          <span class="file-copy">
+            <strong>{{ selectedFile ? selectedFile.name : 'Перетащите аудиозапись сюда' }}</strong>
+            <span>{{ selectedFile ? formatFileSize(selectedFile.size) : 'или выберите файл с устройства · MP3, WAV, M4A' }}</span>
+          </span>
+          <span class="file-action">{{ selectedFile ? 'Изменить' : 'Выбрать файл' }}</span>
+        </label>
+
+        <div class="upload-footer">
+          <p><span aria-hidden="true">⌁</span> После загрузки расшифровка и оценка появятся автоматически.</p>
+          <button class="primary-button" type="button" :disabled="isLoading || isUploading || !selectedFile" @click="uploadCall">
+            {{ isUploading ? 'Загружаем…' : 'Запустить анализ' }}
+          </button>
+        </div>
       </div>
     </section>
 
     <p v-if="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
-    <section class="status-card" :class="{ 'status-card--complete': activeCall?.state === 'completed' }" aria-live="polite">
-      <div><p class="eyebrow">Состояние анализа</p><h2>{{ processingLabel }}</h2><p v-if="activeCall && activeCall.state !== 'completed'" class="progress-copy">Выполнено {{ activeCall.progress }}%. Интерфейс обновляется каждые 3 секунды.</p></div>
-      <div class="score"><strong>{{ riskScore ?? '—' }}</strong><span>из 100</span></div>
+    <section class="status-card" :class="{ 'status-card--complete': activeCall?.state === 'completed', 'status-card--idle': !activeCall }" aria-live="polite">
+      <div class="status-copy">
+        <span class="status-icon" :class="{ 'status-icon--complete': activeCall?.state === 'completed' }" aria-hidden="true">
+          <svg v-if="activeCall?.state === 'completed'" viewBox="0 0 24 24" fill="none"><path d="m5 12 4.5 4.5L19 7"/></svg>
+          <svg v-else-if="activeCall" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 1-6.36 2.64"/></svg>
+          <svg v-else viewBox="0 0 24 24" fill="none"><path d="M12 3v9l6 3"/><circle cx="12" cy="12" r="9"/></svg>
+        </span>
+        <div>
+          <p class="eyebrow">Состояние анализа</p>
+          <h2>{{ processingLabel }}</h2>
+          <p v-if="activeCall && activeCall.state !== 'completed'" class="progress-copy">Выполнено {{ activeCall.progress }}%. Обновляем данные каждые 3 секунды.</p>
+          <p v-else-if="!activeCall" class="progress-copy">Здесь появятся оценка риска, ключевые фразы и основания решения.</p>
+        </div>
+      </div>
+      <div v-if="riskScore !== null" class="score-panel">
+        <span>Уверенность в риске</span>
+        <div><strong>{{ riskScore }}</strong><small>из 100</small></div>
+      </div>
+      <div v-else-if="activeCall" class="score-pending"><span class="pulse-dot"></span> Формируем оценку</div>
+      <div v-else class="status-hint"><span>02</span><p>Анализ начнётся<br />после загрузки файла</p></div>
     </section>
 
     <template v-if="activeCall?.analysis">
