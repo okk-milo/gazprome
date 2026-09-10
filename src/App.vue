@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import {
   createEmployee,
   createUpload,
+  deleteEmployee,
   getCallSnapshot,
   listDeals,
   listEmployees,
@@ -21,6 +22,7 @@ const selectedFile = ref<File | null>(null)
 const activeCall = ref<CallSnapshot | null>(null)
 const isLoading = ref(true)
 const isUploading = ref(false)
+const isDeletingEmployee = ref(false)
 const isFileDragging = ref(false)
 const errorMessage = ref<string | null>(null)
 let pollingTimer: ReturnType<typeof setInterval> | null = null
@@ -81,6 +83,23 @@ async function addEmployee(): Promise<void> {
     selectedEmployeeId.value = employee.id
   } catch (error: unknown) {
     errorMessage.value = readError(error)
+  }
+}
+
+async function removeEmployee(): Promise<void> {
+  const employeeId = selectedEmployeeId.value
+  if (!employeeId || isDeletingEmployee.value) return
+
+  errorMessage.value = null
+  isDeletingEmployee.value = true
+  try {
+    await deleteEmployee(employeeId)
+    employees.value = employees.value.filter((employee) => employee.id !== employeeId)
+    selectedEmployeeId.value = employees.value[0]?.id ?? ''
+  } catch (error: unknown) {
+    errorMessage.value = readError(error)
+  } finally {
+    isDeletingEmployee.value = false
   }
 }
 
@@ -184,10 +203,16 @@ function readError(error: unknown): string {
           <label class="field-control">
             <span>Сотрудник</span>
             <div class="employee-picker">
-              <select v-model="selectedEmployeeId" :disabled="isLoading || isUploading">
-                <option v-for="employee in employees" :key="employee.id" :value="employee.id">{{ employee.name }}</option>
-              </select>
-              <button class="add-employee-button" type="button" :disabled="isLoading || isUploading" @click="addEmployee">
+              <div class="select-control">
+                <select v-model="selectedEmployeeId" :disabled="isLoading || isUploading || isDeletingEmployee">
+                  <option v-for="employee in employees" :key="employee.id" :value="employee.id">{{ employee.name }}</option>
+                </select>
+                <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+              </div>
+              <button class="remove-employee-button" type="button" title="Удалить выбранного сотрудника" aria-label="Удалить выбранного сотрудника" :disabled="isLoading || isUploading || isDeletingEmployee || !selectedEmployeeId" @click="removeEmployee">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M9 7l1-2h4l1 2m-9 0 1 13h10l1-13" /></svg>
+              </button>
+              <button class="add-employee-button" type="button" :disabled="isLoading || isUploading || isDeletingEmployee" @click="addEmployee">
                 <span aria-hidden="true">+</span> Новый сотрудник
               </button>
             </div>
@@ -195,9 +220,12 @@ function readError(error: unknown): string {
 
           <label class="field-control">
             <span>Сделка</span>
-            <select v-model="selectedDealId" :disabled="isLoading || isUploading">
-              <option v-for="deal in deals" :key="deal.id" :value="deal.id">{{ deal.title }}</option>
-            </select>
+            <div class="select-control">
+              <select v-model="selectedDealId" :disabled="isLoading || isUploading || isDeletingEmployee">
+                <option v-for="deal in deals" :key="deal.id" :value="deal.id">{{ deal.title }}</option>
+              </select>
+              <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+            </div>
           </label>
         </div>
 
@@ -221,7 +249,7 @@ function readError(error: unknown): string {
         </label>
 
         <div class="upload-footer">
-          <p><span aria-hidden="true">⌁</span> После загрузки расшифровка и оценка появятся автоматически.</p>
+          <p><svg class="footer-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h12m-4-4 4 4-4 4" /></svg> После загрузки расшифровка и оценка появятся автоматически.</p>
           <button class="primary-button" type="button" :disabled="isLoading || isUploading || !selectedFile" @click="uploadCall">
             {{ isUploading ? 'Загружаем…' : 'Запустить анализ' }}
           </button>

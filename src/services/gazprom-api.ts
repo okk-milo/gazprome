@@ -15,6 +15,7 @@ interface UploadResponse { call: CallSnapshot; uploadUrl: string | null }
 
 export function listEmployees(): Promise<Employee[]> { return request('/v1/employees', parseEmployees) }
 export function createEmployee(): Promise<Employee> { return request('/v1/employees', parseEmployee, { method: 'POST', body: '{}' }) }
+export function deleteEmployee(employeeId: string): Promise<void> { return requestEmpty(`/v1/employees/${encodeURIComponent(employeeId)}`, { method: 'DELETE' }) }
 export function listDeals(): Promise<Deal[]> { return request('/v1/deals', parseDeals) }
 export function createUpload(dealId: string, employeeId: string, file: File): Promise<UploadResponse> { return request(`/v1/deals/${encodeURIComponent(dealId)}/calls/upload-url`, parseUploadResponse, { method: 'POST', body: JSON.stringify({ employeeId, fileName: file.name, contentType: file.type || 'audio/mpeg' }) }) }
 export function markUploaded(callId: string): Promise<CallSnapshot> { return request(`/v1/calls/${encodeURIComponent(callId)}/uploaded`, parseSnapshot, { method: 'POST' }) }
@@ -22,8 +23,20 @@ export function getCallSnapshot(callId: string): Promise<CallSnapshot> { return 
 
 async function request<T>(path: string, parser: (value: unknown) => T, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers: { 'Content-Type': 'application/json', ...init?.headers } })
-  if (!response.ok) throw new Error(`API вернул HTTP ${response.status}`)
+  if (!response.ok) throw new Error(await readResponseError(response))
   return parser(await response.json() as unknown)
+}
+async function requestEmpty(path: string, init?: RequestInit): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers: { 'Content-Type': 'application/json', ...init?.headers } })
+  if (!response.ok) throw new Error(await readResponseError(response))
+}
+async function readResponseError(response: Response): Promise<string> {
+  const body: unknown = await response.json().catch(() => null)
+  if (typeof body === 'object' && body !== null && !Array.isArray(body)) {
+    const message = (body as Record<string, unknown>).message
+    if (typeof message === 'string') return message
+  }
+  return `API вернул HTTP ${response.status}`
 }
 function parseEmployees(value: unknown): Employee[] { return readArray(value, 'Некорректный список сотрудников').map(parseEmployee) }
 function parseEmployee(value: unknown): Employee { const item = readRecord(value, 'Некорректный сотрудник'); return { id: readString(item.id, 'Некорректный ID сотрудника'), name: readString(item.name, 'Некорректное имя сотрудника') } }

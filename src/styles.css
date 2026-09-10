@@ -96,9 +96,11 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 
 .upload-workspace { display: grid; gap: 16px; padding-top: 20px; }
 
-.upload-fields { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr); gap: 14px; }
+.upload-fields { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr); align-items: end; gap: 14px; }
 
-.field-control { display: grid; gap: 7px; color: #62646d; font-size: 12px; font-weight: 700; }
+.field-control { display: grid; gap: 7px; color: #62646d; font-size: 12px; font-weight: 700; line-height: 1.2; }
+
+.select-control { position: relative; min-width: 0; }
 
 .field-control select {
   width: 100%;
@@ -111,11 +113,28 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
   color: #282a31;
   background: #fff;
   font-weight: 650;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .field-control select:focus { border-color: #5c82e5; box-shadow: 0 0 0 3px rgba(57, 99, 218, 0.12); }
 
-.employee-picker { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
+.select-chevron {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  color: #535b6b;
+  pointer-events: none;
+}
+
+.select-chevron path,
+.remove-employee-button path,
+.footer-icon path { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
+
+.employee-picker { display: grid; grid-template-columns: minmax(0, 1fr) 48px auto; gap: 9px; }
 
 .add-employee-button {
   min-height: 48px;
@@ -130,6 +149,21 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 }
 
 .add-employee-button span { margin-right: 3px; font-size: 17px; font-weight: 500; vertical-align: -1px; }
+
+.remove-employee-button {
+  display: grid;
+  width: 48px;
+  min-height: 48px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #d9dce5;
+  border-radius: 12px;
+  color: #6c7280;
+  background: #fff;
+}
+
+.remove-employee-button svg { width: 19px; height: 19px; }
+.remove-employee-button:hover:not(:disabled) { border-color: #efc9c4; color: #b55246; background: #fff7f5; }
 
 .file-dropzone {
   display: grid;
@@ -194,8 +228,8 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 }
 
 .upload-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.upload-footer p { margin-bottom: 0; color: #7d808a; font-size: 12px; line-height: 1.4; }
-.upload-footer p span { margin-right: 5px; color: #567de0; font-weight: 800; }
+.upload-footer p { display: flex; align-items: center; gap: 7px; margin-bottom: 0; color: #7d808a; font-size: 12px; line-height: 1.4; }
+.footer-icon { width: 16px; height: 16px; flex: 0 0 auto; color: #567de0; }
 
 .primary-button {
   min-height: 46px;
@@ -210,7 +244,8 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 }
 
 .primary-button:disabled,
-.add-employee-button:disabled { cursor: not-allowed; opacity: 0.5; box-shadow: none; }
+.add-employee-button:disabled,
+.remove-employee-button:disabled { cursor: not-allowed; opacity: 0.5; box-shadow: none; }
 
 .error-message { padding: 12px 15px; border-radius: 12px; color: #a6382a; background: #fff0ed; }
 
