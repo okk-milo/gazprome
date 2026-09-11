@@ -247,7 +247,71 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 .add-employee-button:disabled,
 .remove-employee-button:disabled { cursor: not-allowed; opacity: 0.5; box-shadow: none; }
 
-.error-message { padding: 12px 15px; border-radius: 12px; color: #a6382a; background: #fff0ed; }
+.toast-stack {
+  position: fixed;
+  z-index: 20;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  width: min(380px, calc(100vw - 32px));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toast {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #dce3f0;
+  border-radius: 14px;
+  color: #30333b;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 30px rgba(35, 45, 70, 0.16);
+  animation: toast-enter 180ms ease-out;
+}
+
+.toast--success { border-color: #c8e3d1; }
+.toast--error { border-color: #f0c9c3; }
+
+.toast-icon {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  color: #3b8156;
+  background: #edf9f0;
+}
+
+.toast--error .toast-icon { color: #b24d42; background: #fff0ed; }
+.toast-icon svg,
+.toast button svg { width: 16px; height: 16px; }
+.toast-icon path,
+.toast button path { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+.toast p { margin: 2px 0 0; font-size: 13px; font-weight: 650; line-height: 1.35; }
+
+.toast button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  color: #7b808c;
+  background: transparent;
+}
+
+.toast button:hover { color: #343945; background: #f2f4f8; }
+
+@keyframes toast-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .status-card {
   display: flex;

@@ -14,6 +14,12 @@ import {
   type TranscriptSegment,
 } from './services/gazprom-api'
 
+interface Toast {
+  id: number
+  kind: 'success' | 'error'
+  message: string
+}
+
 const employees = ref<Employee[]>([])
 const deals = ref<Deal[]>([])
 const selectedEmployeeId = ref('')
@@ -24,8 +30,10 @@ const isLoading = ref(true)
 const isUploading = ref(false)
 const isDeletingEmployee = ref(false)
 const isFileDragging = ref(false)
-const errorMessage = ref<string | null>(null)
+const toasts = ref<Toast[]>([])
 let pollingTimer: ReturnType<typeof setInterval> | null = null
+let nextToastId = 0
+const toastTimers = new Map<number, ReturnType<typeof setTimeout>>()
 
 const riskScore = computed(() => activeCall.value?.analysis?.score ?? null)
 const processingLabel = computed(() => {
@@ -45,13 +53,16 @@ onMounted(async () => {
     selectedEmployeeId.value = employees.value[0]?.id ?? ''
     selectedDealId.value = deals.value[0]?.id ?? ''
   } catch (error: unknown) {
-    errorMessage.value = readError(error)
+    showError(error)
   } finally {
     isLoading.value = false
   }
 })
 
-onBeforeUnmount(stopPolling)
+onBeforeUnmount(() => {
+  stopPolling()
+  toastTimers.forEach((timer) => clearTimeout(timer))
+})
 
 function onFileChange(event: Event): void {
   const input = event.target
@@ -68,11 +79,10 @@ function setSelectedFile(file: File | null): void {
   if (!file) return
 
   if (file.type && !file.type.startsWith('audio/')) {
-    errorMessage.value = 'Для анализа подходит аудиофайл.'
+    showToast('error', 'Для анализа подходит аудиофайл.')
     return
   }
 
-  errorMessage.value = null
   selectedFile.value = file
 }
 
@@ -81,8 +91,9 @@ async function addEmployee(): Promise<void> {
     const employee = await createEmployee()
     employees.value = [...employees.value, employee]
     selectedEmployeeId.value = employee.id
+    showToast('success', 'Сотрудник добавлен.')
   } catch (error: unknown) {
-    errorMessage.value = readError(error)
+    showError(error)
   }
 }
 
@@ -90,14 +101,14 @@ async function removeEmployee(): Promise<void> {
   const employeeId = selectedEmployeeId.value
   if (!employeeId || isDeletingEmployee.value) return
 
-  errorMessage.value = null
   isDeletingEmployee.value = true
   try {
     await deleteEmployee(employeeId)
     employees.value = employees.value.filter((employee) => employee.id !== employeeId)
     selectedEmployeeId.value = employees.value[0]?.id ?? ''
+    showToast('success', 'Сотрудник удалён.')
   } catch (error: unknown) {
-    errorMessage.value = readError(error)
+    showError(error)
   } finally {
     isDeletingEmployee.value = false
   }
@@ -106,11 +117,10 @@ async function removeEmployee(): Promise<void> {
 async function uploadCall(): Promise<void> {
   const file = selectedFile.value
   if (!file || !selectedEmployeeId.value || !selectedDealId.value) {
-    errorMessage.value = 'Выберите сотрудника, сделку и аудиозапись.'
+    showToast('error', 'Выберите сотрудника, сделку и аудиозапись.')
     return
   }
 
-  errorMessage.value = null
   isUploading.value = true
   try {
     const upload = await createUpload(selectedDealId.value, selectedEmployeeId.value, file)
@@ -125,8 +135,9 @@ async function uploadCall(): Promise<void> {
     activeCall.value = await markUploaded(upload.call.id)
     selectedFile.value = null
     startPolling()
+    showToast('success', 'Аудиозапись загружена. Начинаем анализ.')
   } catch (error: unknown) {
-    errorMessage.value = readError(error)
+    showError(error)
   } finally {
     isUploading.value = false
   }
@@ -149,9 +160,18 @@ async function refreshSnapshot(): Promise<void> {
     return
   }
   try {
-    activeCall.value = await getCallSnapshot(call.id)
+    const snapshot = await getCallSnapshot(call.id)
+    activeCall.value = snapshot
+    if (snapshot.state === 'completed') {
+      stopPolling()
+      showToast('success', 'Анализ звонка завершён.')
+    }
+    if (snapshot.state === 'failed') {
+      stopPolling()
+      showToast('error', 'Не удалось обработать запись.')
+    }
   } catch (error: unknown) {
-    errorMessage.value = readError(error)
+    showError(error)
     stopPolling()
   }
 }
@@ -179,9 +199,40 @@ function highlightPieces(segment: TranscriptSegment): Array<{ text: string; high
 function readError(error: unknown): string {
   return error instanceof Error ? error.message : 'Не удалось выполнить запрос.'
 }
+
+function showError(error: unknown): void {
+  showToast('error', readError(error))
+}
+
+function showToast(kind: Toast['kind'], message: string): void {
+  const id = nextToastId
+  nextToastId += 1
+  toasts.value = [...toasts.value, { id, kind, message }]
+  toastTimers.set(id, setTimeout(() => dismissToast(id), 5000))
+}
+
+function dismissToast(id: number): void {
+  const timer = toastTimers.get(id)
+  if (timer) clearTimeout(timer)
+  toastTimers.delete(id)
+  toasts.value = toasts.value.filter((toast) => toast.id !== id)
+}
 </script>
 
 <template>
+  <Teleport to="body">
+    <ol v-if="toasts.length" class="toast-stack" aria-live="polite" aria-relevant="additions">
+      <li v-for="toast in toasts" :key="toast.id" class="toast" :class="`toast--${toast.kind}`" :role="toast.kind === 'error' ? 'alert' : 'status'">
+        <span class="toast-icon" aria-hidden="true">
+          <svg v-if="toast.kind === 'success'" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7" /></svg>
+          <svg v-else viewBox="0 0 24 24"><path d="M12 8v5m0 3h.01M12 3 3.8 18a2 2 0 0 0 1.76 3h12.88a2 2 0 0 0 1.76-3L12 3Z" /></svg>
+        </span>
+        <p>{{ toast.message }}</p>
+        <button type="button" aria-label="Закрыть уведомление" @click="dismissToast(toast.id)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" /></svg></button>
+      </li>
+    </ol>
+  </Teleport>
+
   <main class="app-shell">
     <header class="app-header">
       <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -257,7 +308,6 @@ function readError(error: unknown): string {
       </div>
     </section>
 
-    <p v-if="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
     <section class="status-card" :class="{ 'status-card--complete': activeCall?.state === 'completed', 'status-card--idle': !activeCall }" aria-live="polite">
       <div class="status-copy">
         <span class="status-icon" :class="{ 'status-icon--complete': activeCall?.state === 'completed' }" aria-hidden="true">
