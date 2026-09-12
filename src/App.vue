@@ -16,7 +16,7 @@ import {
 
 interface Toast {
   id: number
-  kind: 'success' | 'error'
+  kind: 'success' | 'error' | 'info'
   message: string
 }
 
@@ -36,14 +36,27 @@ let nextToastId = 0
 const toastTimers = new Map<number, ReturnType<typeof setTimeout>>()
 
 const riskScore = computed(() => activeCall.value?.analysis?.score ?? null)
+const isTerminalCall = computed(() => {
+  const state = activeCall.value?.state
+  return state === 'completed' || state === 'no_speech' || state === 'failed'
+})
 const processingLabel = computed(() => {
   const state = activeCall.value?.state
   if (state === 'transcribing') return 'Расшифровываем запись'
   if (state === 'analysing') return 'Оцениваем риск мошенничества'
   if (state === 'uploaded') return 'Звонок ожидает обработки'
   if (state === 'completed') return 'Анализ завершён'
+  if (state === 'no_speech') return 'В записи не распознана речь'
   if (state === 'failed') return 'Не удалось обработать звонок'
   return 'Выберите запись для анализа'
+})
+const processingDescription = computed(() => {
+  const state = activeCall.value?.state
+  if (state === 'no_speech') return 'Оценка риска не сформирована. Проверьте звук или выберите другую запись.'
+  if (state === 'failed') return 'Попробуйте загрузить запись ещё раз. Если ошибка повторится, обратитесь к администратору.'
+  if (state === 'completed') return ''
+  if (activeCall.value) return `Выполнено ${activeCall.value.progress}%. Обновляем данные каждые 3 секунды.`
+  return 'Здесь появятся оценка риска, ключевые фразы и основания решения.'
 })
 
 onMounted(async () => {
@@ -155,7 +168,7 @@ function stopPolling(): void {
 
 async function refreshSnapshot(): Promise<void> {
   const call = activeCall.value
-  if (!call || call.state === 'completed' || call.state === 'failed') {
+  if (!call || isTerminalCall.value) {
     stopPolling()
     return
   }
@@ -165,6 +178,10 @@ async function refreshSnapshot(): Promise<void> {
     if (snapshot.state === 'completed') {
       stopPolling()
       showToast('success', 'Анализ звонка завершён.')
+    }
+    if (snapshot.state === 'no_speech') {
+      stopPolling()
+      showToast('info', 'В записи не распознана речь. Оценка риска не сформирована.')
     }
     if (snapshot.state === 'failed') {
       stopPolling()
@@ -225,6 +242,7 @@ function dismissToast(id: number): void {
       <li v-for="toast in toasts" :key="toast.id" class="toast" :class="`toast--${toast.kind}`" :role="toast.kind === 'error' ? 'alert' : 'status'">
         <span class="toast-icon" aria-hidden="true">
           <svg v-if="toast.kind === 'success'" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7" /></svg>
+          <svg v-else-if="toast.kind === 'info'" viewBox="0 0 24 24"><path d="M12 11v5m0-9h.01" /><circle cx="12" cy="12" r="9" /></svg>
           <svg v-else viewBox="0 0 24 24"><path d="M12 8v5m0 3h.01M12 3 3.8 18a2 2 0 0 0 1.76 3h12.88a2 2 0 0 0 1.76-3L12 3Z" /></svg>
         </span>
         <p>{{ toast.message }}</p>
@@ -308,24 +326,26 @@ function dismissToast(id: number): void {
       </div>
     </section>
 
-    <section class="status-card" :class="{ 'status-card--complete': activeCall?.state === 'completed', 'status-card--idle': !activeCall }" aria-live="polite">
+    <section class="status-card" :class="{ 'status-card--complete': activeCall?.state === 'completed', 'status-card--notice': activeCall?.state === 'no_speech', 'status-card--idle': !activeCall }" aria-live="polite">
       <div class="status-copy">
-        <span class="status-icon" :class="{ 'status-icon--complete': activeCall?.state === 'completed' }" aria-hidden="true">
+        <span class="status-icon" :class="{ 'status-icon--complete': activeCall?.state === 'completed', 'status-icon--notice': activeCall?.state === 'no_speech' }" aria-hidden="true">
           <svg v-if="activeCall?.state === 'completed'" viewBox="0 0 24 24" fill="none"><path d="m5 12 4.5 4.5L19 7"/></svg>
+          <svg v-else-if="activeCall?.state === 'no_speech'" viewBox="0 0 24 24" fill="none"><path d="M12 11v5m0-9h.01"/><circle cx="12" cy="12" r="9"/></svg>
           <svg v-else-if="activeCall" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 1-6.36 2.64"/></svg>
           <svg v-else viewBox="0 0 24 24" fill="none"><path d="M12 3v9l6 3"/><circle cx="12" cy="12" r="9"/></svg>
         </span>
         <div>
           <p class="eyebrow">Состояние анализа</p>
           <h2>{{ processingLabel }}</h2>
-          <p v-if="activeCall && activeCall.state !== 'completed'" class="progress-copy">Выполнено {{ activeCall.progress }}%. Обновляем данные каждые 3 секунды.</p>
-          <p v-else-if="!activeCall" class="progress-copy">Здесь появятся оценка риска, ключевые фразы и основания решения.</p>
+          <p v-if="processingDescription" class="progress-copy">{{ processingDescription }}</p>
         </div>
       </div>
       <div v-if="riskScore !== null" class="score-panel">
         <span>Уверенность в риске</span>
         <div><strong>{{ riskScore }}</strong><small>из 100</small></div>
       </div>
+      <div v-else-if="activeCall?.state === 'no_speech'" class="score-pending score-pending--notice">Без оценки риска</div>
+      <div v-else-if="activeCall?.state === 'failed'" class="score-pending score-pending--error">Требуется повторная загрузка</div>
       <div v-else-if="activeCall" class="score-pending"><span class="pulse-dot"></span> Формируем оценку</div>
       <div v-else class="status-hint"><span>02</span><p>Анализ начнётся<br />после загрузки файла</p></div>
     </section>

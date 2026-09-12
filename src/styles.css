@@ -276,6 +276,7 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 
 .toast--success { border-color: #c8e3d1; }
 .toast--error { border-color: #f0c9c3; }
+.toast--info { border-color: #cdd9f5; }
 
 .toast-icon {
   display: grid;
@@ -288,6 +289,7 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 }
 
 .toast--error .toast-icon { color: #b24d42; background: #fff0ed; }
+.toast--info .toast-icon { color: #456fc9; background: #edf3ff; }
 .toast-icon svg,
 .toast button svg { width: 16px; height: 16px; }
 .toast-icon path,
@@ -325,6 +327,7 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 
 .status-card--idle { background: linear-gradient(110deg, #fff 0%, #fbfcff 70%, #f6f8ff); }
 .status-card--complete { border-color: #cfe5d5; background: linear-gradient(110deg, #fff, #f6fff8); }
+.status-card--notice { border-color: #d7e1fb; background: linear-gradient(110deg, #fff, #f6f8ff); }
 
 .status-copy { display: flex; align-items: center; gap: 15px; min-width: 0; }
 
@@ -341,6 +344,7 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 }
 
 .status-icon--complete { border-color: #bce0c6; color: #398251; background: #effaf1; }
+.status-icon--notice { border-color: #cbd9fb; color: #456fc9; background: #f0f4ff; }
 .status-icon svg { width: 23px; height: 23px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
 
 .progress-copy { max-width: 570px; margin-bottom: 0; color: #74767e; font-size: 14px; line-height: 1.45; }
@@ -360,6 +364,8 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 .score-panel small { color: #777983; font-size: 12px; }
 
 .score-pending { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: 12px; color: #5f697d; background: #f5f7fb; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.score-pending--notice { color: #456fc9; background: #eff4ff; }
+.score-pending--error { color: #a8554b; background: #fff3f0; }
 .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #4e76db; box-shadow: 0 0 0 4px rgba(78, 118, 219, 0.13); animation: pulse 1.4s ease-in-out infinite; }
 
 .status-hint { display: flex; align-items: center; gap: 11px; padding-left: 25px; border-left: 1px solid #e7eaf1; color: #737783; }
