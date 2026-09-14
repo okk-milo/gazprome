@@ -79,7 +79,7 @@ const processingDescription = computed(() => {
   if (state === 'no_speech') return 'Оценка риска не сформирована. Проверьте звук или выберите другую запись.'
   if (state === 'failed') return 'Обработка прервана. Сообщите администратору об этой проверке.'
   if (state === 'completed') return ''
-  if (activeCall.value) return `Выполнено ${activeCall.value.progress}%. Обновляем данные каждые 3 секунды.`
+  if (activeCall.value) return `Выполнено ${activeCall.value.progress}%.`
   return 'Здесь появятся оценка риска, ключевые фразы и основания решения.'
 })
 
@@ -479,8 +479,26 @@ function dismissToast(id: number): void {
           </ol>
         </article>
         <div class="factors-column">
-          <article class="card factor-card" aria-labelledby="for-title"><div class="card-heading"><div><p class="eyebrow">Основания</p><h2 id="for-title">Что говорит за риск</h2></div></div><ul class="factor-list"><li v-for="factor in activeCall.analysis.factorsFor" :key="factor.id"><strong>{{ factor.title }}</strong><p>{{ factor.description }}</p><span>{{ Math.round(factor.confidence * 100) }}%</span></li></ul></article>
-          <article class="card factor-card factor-card--against" aria-labelledby="against-title"><div class="card-heading"><div><p class="eyebrow">Проверка</p><h2 id="against-title">Что снижает риск</h2></div></div><ul class="factor-list"><li v-for="factor in activeCall.analysis.factorsAgainst" :key="factor.id"><strong>{{ factor.title }}</strong><p>{{ factor.description }}</p><span>{{ Math.round(factor.confidence * 100) }}%</span></li></ul></article>
+          <article class="card factor-card" aria-labelledby="for-title">
+            <div class="card-heading"><div><p class="eyebrow">Основания</p><h2 id="for-title">Что говорит за риск</h2></div></div>
+            <ul v-if="activeCall.analysis.factorsFor.length" class="factor-list">
+              <li v-for="factor in activeCall.analysis.factorsFor" :key="factor.id"><strong>{{ factor.title }}</strong><p>{{ factor.description }}</p><span>{{ Math.round(factor.confidence * 100) }}%</span></li>
+            </ul>
+            <div v-else class="factor-empty">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
+              <div><strong>{{ isTerminalCall ? 'Основания не выявлены' : 'Основания пока не выявлены' }}</strong><p>В проанализированных фрагментах не найдены факторы, повышающие риск.</p></div>
+            </div>
+          </article>
+          <article class="card factor-card factor-card--against" aria-labelledby="against-title">
+            <div class="card-heading"><div><p class="eyebrow">Проверка</p><h2 id="against-title">Что снижает риск</h2></div></div>
+            <ul v-if="activeCall.analysis.factorsAgainst.length" class="factor-list">
+              <li v-for="factor in activeCall.analysis.factorsAgainst" :key="factor.id"><strong>{{ factor.title }}</strong><p>{{ factor.description }}</p><span>{{ Math.round(factor.confidence * 100) }}%</span></li>
+            </ul>
+            <div v-else class="factor-empty">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
+              <div><strong>{{ isTerminalCall ? 'Снижающие риск факторы не выявлены' : 'Снижающие риск факторы пока не выявлены' }}</strong><p>В проанализированных фрагментах не найдены основания для снижения оценки.</p></div>
+            </div>
+          </article>
         </div>
       </section>
     </template>
