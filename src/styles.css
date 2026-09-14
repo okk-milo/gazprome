@@ -86,6 +86,11 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 .history-state--failed { color: #aa554b; background: #fff0ed; }
 .history-state--analysing,
 .history-state--transcribing { color: #486fc7; background: #eef3ff; }
+.history-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding-top: 14px; }
+.history-pagination button { min-height: 32px; padding: 0 11px; border: 1px solid #dce1ec; border-radius: 9px; color: #3d5fae; background: #fff; font-size: 12px; font-weight: 700; }
+.history-pagination button:hover:not(:disabled) { border-color: #b7c8ee; background: #f5f8ff; }
+.history-pagination button:disabled { cursor: default; color: #a0a5b0; background: #f6f7f9; }
+.history-pagination span { color: #737783; font-size: 12px; }
 
 .status-card {
   border: 1px solid #e4e5eb;
@@ -447,6 +452,7 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
   .history-list time { grid-column: 1; grid-row: 2; }
   .history-score { grid-column: 2; grid-row: 1; justify-self: end; }
   .history-state { grid-column: 2; grid-row: 2; justify-self: end; }
+  .history-pagination { justify-content: space-between; }
 }
 
 @media (max-width: 560px) {

@@ -10,6 +10,7 @@ import {
   listEmployees,
   markUploaded,
   type CallHistoryItem,
+  type CallHistoryPage,
   type CallSnapshot,
   type Deal,
   type Employee,
@@ -33,6 +34,9 @@ const selectedDealId = ref('')
 const selectedFile = ref<File | null>(null)
 const activeCall = ref<CallSnapshot | null>(null)
 const callHistory = ref<CallHistoryItem[]>([])
+const historyPage = ref(1)
+const historyPageSize = ref(5)
+const historyTotal = ref(0)
 const isLoading = ref(true)
 const isUploading = ref(false)
 const isDeletingEmployee = ref(false)
@@ -43,6 +47,7 @@ let nextToastId = 0
 const toastTimers = new Map<number, ReturnType<typeof setTimeout>>()
 
 const riskScore = computed(() => activeCall.value?.analysis?.score ?? null)
+const historyPageCount = computed(() => Math.max(1, Math.ceil(historyTotal.value / historyPageSize.value)))
 const timelinePoints = computed<TimelinePoint[]>(() => {
   const timeline = activeCall.value?.analysis?.timeline ?? []
   if (timeline.length <= TIMELINE_POINT_LIMIT) return timeline
@@ -83,11 +88,11 @@ onMounted(async () => {
     const [loadedEmployees, loadedDeals, loadedHistory] = await Promise.all([
       listEmployees(),
       listDeals(),
-      listCallHistory(),
+      listCallHistory(1),
     ])
     employees.value = loadedEmployees
     deals.value = loadedDeals
-    callHistory.value = loadedHistory
+    applyHistoryPage(loadedHistory)
     selectedEmployeeId.value = employees.value[0]?.id ?? ''
     selectedDealId.value = deals.value[0]?.id ?? ''
   } catch (error: unknown) {
@@ -171,7 +176,7 @@ async function uploadCall(): Promise<void> {
       if (!response.ok) throw new Error(`Не удалось загрузить запись: HTTP ${response.status}`)
     }
     activeCall.value = await markUploaded(upload.call.id)
-    await loadCallHistory()
+    await loadCallHistory(1)
     selectedFile.value = null
     startPolling()
     showToast('success', 'Аудиозапись загружена. Начинаем анализ.')
@@ -220,8 +225,24 @@ async function refreshSnapshot(): Promise<void> {
   }
 }
 
-async function loadCallHistory(): Promise<void> {
-  callHistory.value = await listCallHistory()
+async function loadCallHistory(page = historyPage.value): Promise<void> {
+  applyHistoryPage(await listCallHistory(page))
+}
+
+async function changeHistoryPage(page: number): Promise<void> {
+  if (page < 1 || page > historyPageCount.value || page === historyPage.value) return
+  try {
+    await loadCallHistory(page)
+  } catch (error: unknown) {
+    showError(error)
+  }
+}
+
+function applyHistoryPage(history: CallHistoryPage): void {
+  callHistory.value = history.items
+  historyPage.value = history.page
+  historyPageSize.value = history.pageSize
+  historyTotal.value = history.total
 }
 
 async function openHistoryCall(callId: string): Promise<void> {
@@ -394,7 +415,7 @@ function dismissToast(id: number): void {
     <section class="history-card" aria-labelledby="history-title">
       <div class="history-heading">
         <div><p class="eyebrow">История</p><h2 id="history-title">Предыдущие проверки</h2></div>
-        <span v-if="callHistory.length" class="history-count">{{ callHistory.length }}</span>
+        <span v-if="historyTotal" class="history-count">{{ historyTotal }}</span>
       </div>
       <p v-if="!callHistory.length" class="history-empty">Завершённые проверки появятся здесь.</p>
       <ol v-else class="history-list">
@@ -408,6 +429,11 @@ function dismissToast(id: number): void {
           </button>
         </li>
       </ol>
+      <nav v-if="historyPageCount > 1" class="history-pagination" aria-label="Страницы истории проверок">
+        <button type="button" :disabled="historyPage === 1" @click="changeHistoryPage(historyPage - 1)">Назад</button>
+        <span>Страница {{ historyPage }} из {{ historyPageCount }}</span>
+        <button type="button" :disabled="historyPage === historyPageCount" @click="changeHistoryPage(historyPage + 1)">Далее</button>
+      </nav>
     </section>
 
     <section class="status-card" :class="{ 'status-card--complete': activeCall?.state === 'completed', 'status-card--notice': activeCall?.state === 'no_speech', 'status-card--idle': !activeCall }" aria-live="polite">
