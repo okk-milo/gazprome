@@ -20,6 +20,10 @@ interface Toast {
   message: string
 }
 
+type TimelinePoint = NonNullable<CallSnapshot['analysis']>['timeline'][number]
+
+const TIMELINE_POINT_LIMIT = 24
+
 const employees = ref<Employee[]>([])
 const deals = ref<Deal[]>([])
 const selectedEmployeeId = ref('')
@@ -36,6 +40,18 @@ let nextToastId = 0
 const toastTimers = new Map<number, ReturnType<typeof setTimeout>>()
 
 const riskScore = computed(() => activeCall.value?.analysis?.score ?? null)
+const timelinePoints = computed<TimelinePoint[]>(() => {
+  const timeline = activeCall.value?.analysis?.timeline ?? []
+  if (timeline.length <= TIMELINE_POINT_LIMIT) return timeline
+
+  const sampled: TimelinePoint[] = []
+  const lastIndex = timeline.length - 1
+  for (let index = 0; index < TIMELINE_POINT_LIMIT; index += 1) {
+    const point = timeline[Math.round((index * lastIndex) / (TIMELINE_POINT_LIMIT - 1))]
+    if (point) sampled.push(point)
+  }
+  return sampled
+})
 const isTerminalCall = computed(() => {
   const state = activeCall.value?.state
   return state === 'completed' || state === 'no_speech' || state === 'failed'
@@ -352,8 +368,8 @@ function dismissToast(id: number): void {
 
     <template v-if="activeCall?.analysis">
       <section class="card" aria-labelledby="timeline-title">
-        <div class="card-heading"><div><p class="eyebrow">Динамика</p><h2 id="timeline-title">Уверенность по ходу разговора</h2></div><span class="model-label">{{ activeCall.analysis.modelVersion }}</span></div>
-        <div class="timeline" role="img" aria-label="График оценки риска"><div v-for="point in activeCall.analysis.timeline" :key="point.timestampMs" class="timeline-point"><div class="timeline-value">{{ point.score }}</div><div class="timeline-bar" :style="{ height: `${point.score}%` }"></div><time>{{ formatTime(point.timestampMs) }}</time></div></div>
+        <div class="card-heading"><div><p class="eyebrow">Динамика</p><h2 id="timeline-title">Уверенность по ходу разговора</h2></div></div>
+        <div class="timeline" role="img" aria-label="График оценки риска"><div v-for="point in timelinePoints" :key="point.timestampMs" class="timeline-point"><div class="timeline-value">{{ point.score }}</div><div class="timeline-bar" :style="{ height: `${point.score}%` }"></div><time>{{ formatTime(point.timestampMs) }}</time></div></div>
       </section>
 
       <section class="analysis-grid">
