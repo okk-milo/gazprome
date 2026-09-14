@@ -77,7 +77,7 @@ const processingLabel = computed(() => {
 const processingDescription = computed(() => {
   const state = activeCall.value?.state
   if (state === 'no_speech') return 'Оценка риска не сформирована. Проверьте звук или выберите другую запись.'
-  if (state === 'failed') return 'Попробуйте загрузить запись ещё раз. Если ошибка повторится, обратитесь к администратору.'
+  if (state === 'failed') return 'Обработка прервана. Сообщите администратору об этой проверке.'
   if (state === 'completed') return ''
   if (activeCall.value) return `Выполнено ${activeCall.value.progress}%. Обновляем данные каждые 3 секунды.`
   return 'Здесь появятся оценка риска, ключевые фразы и основания решения.'
@@ -455,7 +455,7 @@ function dismissToast(id: number): void {
         <div><strong>{{ riskScore }}</strong><small>из 100</small></div>
       </div>
       <div v-else-if="activeCall?.state === 'no_speech'" class="score-pending score-pending--notice">Без оценки риска</div>
-      <div v-else-if="activeCall?.state === 'failed'" class="score-pending score-pending--error">Требуется повторная загрузка</div>
+      <div v-else-if="activeCall?.state === 'failed'" class="score-pending score-pending--error">Анализ прерван</div>
       <div v-else-if="activeCall" class="score-pending"><span class="pulse-dot"></span> Формируем оценку</div>
       <div v-else class="status-hint"><span>02</span><p>Анализ начнётся<br />после загрузки файла</p></div>
     </section>
@@ -463,11 +463,21 @@ function dismissToast(id: number): void {
     <template v-if="activeCall?.analysis">
       <section class="card" aria-labelledby="timeline-title">
         <div class="card-heading"><div><p class="eyebrow">Динамика</p><h2 id="timeline-title">Уверенность по ходу разговора</h2></div></div>
-        <div class="timeline" role="img" aria-label="График оценки риска"><div v-for="point in timelinePoints" :key="point.timestampMs" class="timeline-point"><div class="timeline-value">{{ point.score }}</div><div class="timeline-bar" :style="{ height: `${point.score}%` }"></div><time>{{ formatTime(point.timestampMs) }}</time></div></div>
+        <p class="timeline-caption">Оценки на конец обработанных фрагментов разговора.</p>
+        <div class="timeline" role="img" aria-label="График оценки риска"><div v-for="point in timelinePoints" :key="point.timestampMs" class="timeline-point"><div class="timeline-value">{{ point.score }}</div><div class="timeline-track"><div class="timeline-bar" :style="{ height: `${point.score}%` }"></div></div><time>{{ formatTime(point.timestampMs) }}</time></div></div>
       </section>
 
       <section class="analysis-grid">
-        <article class="card" aria-labelledby="transcript-title"><div class="card-heading"><div><p class="eyebrow">Расшифровка</p><h2 id="transcript-title">Беседа</h2></div></div><ol class="transcript-list"><li v-for="segment in activeCall.transcript" :key="segment.id" class="transcript-message"><div><strong>{{ segment.speaker }}</strong><time>{{ formatTime(segment.startMs) }}</time></div><p><template v-for="(piece, index) in highlightPieces(segment)" :key="index"><mark v-if="piece.highlighted">{{ piece.text }}</mark><template v-else>{{ piece.text }}</template></template></p></li></ol></article>
+        <article class="card" aria-labelledby="transcript-title">
+          <div class="card-heading"><div><p class="eyebrow">Расшифровка</p><h2 id="transcript-title">Беседа</h2></div></div>
+          <ol class="transcript-list">
+            <li v-for="segment in activeCall.transcript" :key="segment.id" class="transcript-message"
+              :class="{ 'transcript-message--client': segment.speaker === 'Клиент', 'transcript-message--unknown': !['Клиент', 'Оператор'].includes(segment.speaker) }">
+              <div><strong>{{ segment.speaker }}</strong><time>{{ formatTime(segment.startMs) }}</time></div>
+              <p><template v-for="(piece, index) in highlightPieces(segment)" :key="index"><mark v-if="piece.highlighted">{{ piece.text }}</mark><template v-else>{{ piece.text }}</template></template></p>
+            </li>
+          </ol>
+        </article>
         <div class="factors-column">
           <article class="card factor-card" aria-labelledby="for-title"><div class="card-heading"><div><p class="eyebrow">Основания</p><h2 id="for-title">Что говорит за риск</h2></div></div><ul class="factor-list"><li v-for="factor in activeCall.analysis.factorsFor" :key="factor.id"><strong>{{ factor.title }}</strong><p>{{ factor.description }}</p><span>{{ Math.round(factor.confidence * 100) }}%</span></li></ul></article>
           <article class="card factor-card factor-card--against" aria-labelledby="against-title"><div class="card-heading"><div><p class="eyebrow">Проверка</p><h2 id="against-title">Что снижает риск</h2></div></div><ul class="factor-list"><li v-for="factor in activeCall.analysis.factorsAgainst" :key="factor.id"><strong>{{ factor.title }}</strong><p>{{ factor.description }}</p><span>{{ Math.round(factor.confidence * 100) }}%</span></li></ul></article>

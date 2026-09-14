@@ -408,15 +408,18 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 .timeline-point { display: grid; flex: 1 1 0; min-width: 0; grid-template-rows: auto 1fr auto; align-items: end; gap: 7px; }
 .timeline-value,
 .timeline time { overflow: hidden; color: #6e707a; font-size: 11px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-.timeline-bar { min-height: 4px; border-radius: 6px 6px 0 0; background: linear-gradient(#f09c60, #dc6959); }
+.timeline-track { height: 160px; display: flex; align-items: flex-end; }
+.timeline-caption { margin: 0; color: #6e707a; font-size: 13px; }
+.timeline-bar { width: 100%; border-radius: 6px 6px 0 0; background: linear-gradient(#f09c60, #dc6959); }
 
 .analysis-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); gap: 18px; margin-top: 18px; }
 .transcript-list,
 .factor-list { display: flex; flex-direction: column; gap: 10px; padding: 0; margin: 0; list-style: none; }
 .transcript-list { height: 620px; overflow-y: auto; overscroll-behavior: contain; padding-right: 8px; scrollbar-gutter: stable; }
 
-.transcript-message { max-width: 88%; padding: 13px 14px; border: 1px solid #e6e7ec; border-radius: 15px 15px 15px 5px; background: #f7f8fb; }
-.transcript-message:nth-child(even) { align-self: end; border-radius: 15px 15px 5px; background: #f3f4f7; }
+.transcript-message { align-self: start; max-width: 88%; padding: 13px 14px; border: 1px solid #e6e7ec; border-radius: 15px 15px 15px 5px; background: #f7f8fb; }
+.transcript-message--client { align-self: end; border-radius: 15px 15px 5px; background: #f0f4ff; }
+.transcript-message--unknown { align-self: center; border-radius: 15px; border-style: dashed; }
 .transcript-message div { display: flex; justify-content: space-between; gap: 8px; color: #72747e; font-size: 11px; }
 .transcript-message time { color: #a1a2aa; }
 .transcript-message p { margin: 7px 0 0; font-size: 14px; line-height: 1.5; }
