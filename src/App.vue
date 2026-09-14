@@ -290,6 +290,7 @@ function callStateLabel(state: CallHistoryItem['state']): string {
 }
 
 function highlightPieces(segment: TranscriptSegment): Array<{ text: string; highlighted: boolean }> {
+  if (segment.speaker === 'Оператор') return [{ text: segment.text, highlighted: false }]
   const range = segment.highlightRanges[0]
   if (!range) return [{ text: segment.text, highlighted: false }]
   return [

@@ -18,3 +18,8 @@ test('transcript sides follow identified roles, not odd/even positions', async (
   assert.match(css, /\.transcript-message--client\s*\{\s*align-self:\s*end/)
   assert.doesNotMatch(css, /\.transcript-message:nth-child/)
 })
+
+test('operator speech is rendered without highlights even when the API supplies evidence ranges', async () => {
+  const app = await readFile(new URL('../src/App.vue', import.meta.url), 'utf8')
+  assert.match(app, /if \(segment\.speaker === 'Оператор'\) return \[\{ text: segment\.text, highlighted: false \}\][\s\S]*const range = segment\.highlightRanges\[0\]/)
+})
