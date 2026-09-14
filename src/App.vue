@@ -5,9 +5,11 @@ import {
   createUpload,
   deleteEmployee,
   getCallSnapshot,
+  listCallHistory,
   listDeals,
   listEmployees,
   markUploaded,
+  type CallHistoryItem,
   type CallSnapshot,
   type Deal,
   type Employee,
@@ -30,6 +32,7 @@ const selectedEmployeeId = ref('')
 const selectedDealId = ref('')
 const selectedFile = ref<File | null>(null)
 const activeCall = ref<CallSnapshot | null>(null)
+const callHistory = ref<CallHistoryItem[]>([])
 const isLoading = ref(true)
 const isUploading = ref(false)
 const isDeletingEmployee = ref(false)
@@ -77,8 +80,14 @@ const processingDescription = computed(() => {
 
 onMounted(async () => {
   try {
-    employees.value = await listEmployees()
-    deals.value = await listDeals()
+    const [loadedEmployees, loadedDeals, loadedHistory] = await Promise.all([
+      listEmployees(),
+      listDeals(),
+      listCallHistory(),
+    ])
+    employees.value = loadedEmployees
+    deals.value = loadedDeals
+    callHistory.value = loadedHistory
     selectedEmployeeId.value = employees.value[0]?.id ?? ''
     selectedDealId.value = deals.value[0]?.id ?? ''
   } catch (error: unknown) {
@@ -162,6 +171,7 @@ async function uploadCall(): Promise<void> {
       if (!response.ok) throw new Error(`Не удалось загрузить запись: HTTP ${response.status}`)
     }
     activeCall.value = await markUploaded(upload.call.id)
+    await loadCallHistory()
     selectedFile.value = null
     startPolling()
     showToast('success', 'Аудиозапись загружена. Начинаем анализ.')
@@ -191,6 +201,7 @@ async function refreshSnapshot(): Promise<void> {
   try {
     const snapshot = await getCallSnapshot(call.id)
     activeCall.value = snapshot
+    syncHistorySnapshot(snapshot)
     if (snapshot.state === 'completed') {
       stopPolling()
       showToast('success', 'Анализ звонка завершён.')
@@ -209,6 +220,31 @@ async function refreshSnapshot(): Promise<void> {
   }
 }
 
+async function loadCallHistory(): Promise<void> {
+  callHistory.value = await listCallHistory()
+}
+
+async function openHistoryCall(callId: string): Promise<void> {
+  try {
+    activeCall.value = await getCallSnapshot(callId)
+    if (isTerminalCall.value) {
+      stopPolling()
+    } else {
+      startPolling()
+    }
+  } catch (error: unknown) {
+    showError(error)
+  }
+}
+
+function syncHistorySnapshot(snapshot: CallSnapshot): void {
+  callHistory.value = callHistory.value.map((item) =>
+    item.id === snapshot.id
+      ? { ...item, state: snapshot.state, progress: snapshot.progress, score: snapshot.analysis?.score ?? null }
+      : item,
+  )
+}
+
 function formatTime(milliseconds: number): string {
   const seconds = Math.max(0, Math.floor(milliseconds / 1000))
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
@@ -217,6 +253,19 @@ function formatTime(milliseconds: number): string {
 function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} КБ`
   return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`
+}
+
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+}
+
+function callStateLabel(state: CallHistoryItem['state']): string {
+  if (state === 'completed') return 'Готово'
+  if (state === 'no_speech') return 'Нет речи'
+  if (state === 'failed') return 'Ошибка'
+  if (state === 'analysing') return 'Оцениваем'
+  if (state === 'transcribing') return 'Расшифровываем'
+  return 'В очереди'
 }
 
 function highlightPieces(segment: TranscriptSegment): Array<{ text: string; highlighted: boolean }> {
@@ -340,6 +389,25 @@ function dismissToast(id: number): void {
           </button>
         </div>
       </div>
+    </section>
+
+    <section class="history-card" aria-labelledby="history-title">
+      <div class="history-heading">
+        <div><p class="eyebrow">История</p><h2 id="history-title">Предыдущие проверки</h2></div>
+        <span v-if="callHistory.length" class="history-count">{{ callHistory.length }}</span>
+      </div>
+      <p v-if="!callHistory.length" class="history-empty">Завершённые проверки появятся здесь.</p>
+      <ol v-else class="history-list">
+        <li v-for="item in callHistory" :key="item.id">
+          <button type="button" :class="{ 'history-item--active': activeCall?.id === item.id }" @click="openHistoryCall(item.id)">
+            <span class="history-main"><strong>{{ item.fileName }}</strong><span>{{ item.dealTitle }} · {{ item.employeeName }}</span></span>
+            <time>{{ formatDate(item.createdAt) }}</time>
+            <span v-if="item.score !== null" class="history-score">{{ Math.round(item.score) }}<small>из 100</small></span>
+            <span v-else class="history-score history-score--pending">—</span>
+            <span class="history-state" :class="`history-state--${item.state}`">{{ callStateLabel(item.state) }}</span>
+          </button>
+        </li>
+      </ol>
     </section>
 
     <section class="status-card" :class="{ 'status-card--complete': activeCall?.state === 'completed', 'status-card--notice': activeCall?.state === 'no_speech', 'status-card--idle': !activeCall }" aria-live="polite">
