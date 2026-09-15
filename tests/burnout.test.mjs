@@ -48,3 +48,16 @@ test('restored burnout styles cannot override the antifraud page', async () => {
     assert.ok(rule.selectors.every(selector => /^\.burnout-demo(?:\b|__)/.test(selector)), rule.selector)
   })
 })
+
+test('original dark rounded switcher sits inside the header with a mobile wrap', async () => {
+  const app = await readFile(new URL('../src/App.vue', import.meta.url), 'utf8')
+  const header = app.match(/<header class="app-header">([\s\S]*?)<\/header>/)?.[1] ?? ''
+  assert.match(header, /<nav class="page-switcher"/)
+  assert.match(header, /href="#antifraud"/)
+  assert.match(header, /href="#burnout"/)
+  const css = await readFile(new URL('../src/styles.css', import.meta.url), 'utf8')
+  assert.match(css, /\.app-header \{ display: grid; grid-template-columns: auto minmax\(0, 1fr\) auto;/)
+  assert.match(css, /\.page-switcher \{[^}]*justify-self: end;[^}]*border-radius: 999px;/)
+  assert.match(css, /\.page-switcher a\[aria-current="page"\] \{[^}]*background: #202025;/)
+  assert.match(css, /@media \(max-width: 720px\) \{[\s\S]*?\.page-switcher \{ grid-column: 1 \/ -1; justify-self: start;/)
+})

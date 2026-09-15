@@ -364,12 +364,11 @@ function dismissToast(id: number): void {
         <p class="eyebrow">{{ activePage === 'burnout' ? 'Благополучие сотрудников · линия поддержки' : 'Антифрод · анализ звонков' }}</p>
         <h1>{{ activePage === 'burnout' ? 'Состояние сотрудника' : 'Оценка риска воздействия мошенников' }}</h1>
       </div>
+      <nav class="page-switcher" aria-label="Разделы анализа">
+        <a href="#antifraud" :aria-current="activePage === 'antifraud' ? 'page' : undefined">Антифрод</a>
+        <a href="#burnout" :aria-current="activePage === 'burnout' ? 'page' : undefined">Выгорание</a>
+      </nav>
     </header>
-
-    <nav class="page-switcher" aria-label="Разделы анализа">
-      <a href="#antifraud" :aria-current="activePage === 'antifraud' ? 'page' : undefined">Антифрод</a>
-      <a href="#burnout" :aria-current="activePage === 'burnout' ? 'page' : undefined">Выгорание</a>
-    </nav>
 
     <section v-show="activePage === 'antifraud'" aria-label="Анализ звонков">
 
