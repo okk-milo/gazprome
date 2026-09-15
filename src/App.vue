@@ -54,6 +54,7 @@ const isDeletingEmployee = ref(false)
 const isFileDragging = ref(false)
 const toasts = ref<Toast[]>([])
 let pollingTimer: ReturnType<typeof setInterval> | null = null
+let snapshotPending = false
 let nextToastId = 0
 const toastTimers = new Map<number, ReturnType<typeof setTimeout>>()
 
@@ -77,8 +78,8 @@ const isTerminalCall = computed(() => {
 })
 const processingLabel = computed(() => {
   const state = activeCall.value?.state
-  if (state === 'transcribing') return 'Расшифровываем запись'
-  if (state === 'analysing') return 'Оцениваем риск мошенничества'
+  if (state === 'transcribing') return riskScore.value === null ? 'Расшифровываем запись' : 'Анализируем разговор'
+  if (state === 'analysing') return 'Уточняем итоговую оценку'
   if (state === 'uploaded') return 'Звонок ожидает обработки'
   if (state === 'completed') return 'Анализ завершён'
   if (state === 'no_speech') return 'В записи не распознана речь'
@@ -208,7 +209,7 @@ async function uploadCall(): Promise<void> {
 
 function startPolling(): void {
   stopPolling()
-  pollingTimer = setInterval(() => void refreshSnapshot(), 3000)
+  pollingTimer = setInterval(() => void refreshSnapshot(), 1000)
 }
 
 function stopPolling(): void {
@@ -217,13 +218,16 @@ function stopPolling(): void {
 }
 
 async function refreshSnapshot(): Promise<void> {
+  if (snapshotPending) return
   const call = activeCall.value
   if (!call || isTerminalCall.value) {
     stopPolling()
     return
   }
+  snapshotPending = true
   try {
     const snapshot = await getCallSnapshot(call.id)
+    if (activeCall.value?.id !== call.id || snapshot.revision < activeCall.value.revision) return
     activeCall.value = snapshot
     syncHistorySnapshot(snapshot)
     if (snapshot.state === 'completed') {
@@ -239,8 +243,11 @@ async function refreshSnapshot(): Promise<void> {
       showToast('error', 'Не удалось обработать запись.')
     }
   } catch (error: unknown) {
+    if (activeCall.value?.id !== call.id) return
     showError(error)
     stopPolling()
+  } finally {
+    snapshotPending = false
   }
 }
 
@@ -379,7 +386,7 @@ function dismissToast(id: number): void {
           <h2 id="upload-title">Загрузить звонок</h2>
           <p>Выберите сотрудника и сделку — результат появится на этой странице.</p>
         </div>
-        <span class="step-label">Шаг 1 из 2</span>
+        <div class="status-hint upload-step"><span>01</span><p>Выберите запись<br />и запустите анализ</p></div>
       </div>
 
       <div class="upload-workspace">
@@ -427,7 +434,7 @@ function dismissToast(id: number): void {
           </span>
           <span class="file-copy">
             <strong>{{ selectedFile ? selectedFile.name : 'Перетащите аудиозапись сюда' }}</strong>
-            <span>{{ selectedFile ? formatFileSize(selectedFile.size) : 'или выберите файл с устройства · MP3, WAV, M4A' }}</span>
+            <span>{{ selectedFile ? formatFileSize(selectedFile.size) : 'Один файл за загрузку · MP3, WAV, M4A' }}</span>
           </span>
           <span class="file-action">{{ selectedFile ? 'Изменить' : 'Выбрать файл' }}</span>
         </label>
@@ -444,7 +451,7 @@ function dismissToast(id: number): void {
     <section class="history-card" aria-labelledby="history-title">
       <div class="history-heading">
         <div><p class="eyebrow">История</p><h2 id="history-title">Предыдущие проверки</h2></div>
-        <span v-if="historyTotal" class="history-count">{{ historyTotal }}</span>
+        <span class="history-count">Всего проверок: {{ historyTotal }}</span>
       </div>
       <p v-if="!callHistory.length" class="history-empty">Завершённые проверки появятся здесь.</p>
       <ol v-else class="history-list">
@@ -452,8 +459,8 @@ function dismissToast(id: number): void {
           <button type="button" :class="{ 'history-item--active': activeCall?.id === item.id }" @click="openHistoryCall(item.id)">
             <span class="history-main"><strong>{{ item.fileName }}</strong><span>{{ item.dealTitle }} · {{ item.employeeName }}</span></span>
             <time>{{ formatDate(item.createdAt) }}</time>
-            <span v-if="item.score !== null" class="history-score">{{ Math.round(item.score) }}<small>из 100</small></span>
-            <span v-else class="history-score history-score--pending">—</span>
+            <span v-if="item.score !== null" class="history-score"><small>Риск</small><span>{{ Math.round(item.score) }}<small>/100</small></span></span>
+            <span v-else class="history-score history-score--pending"><small>Риск</small><span>—</span></span>
             <span class="history-state" :class="`history-state--${item.state}`">{{ callStateLabel(item.state) }}</span>
           </button>
         </li>
@@ -480,7 +487,7 @@ function dismissToast(id: number): void {
         </div>
       </div>
       <div v-if="riskScore !== null" class="score-panel">
-        <span>Уверенность в риске</span>
+        <span>{{ activeCall?.state === 'completed' ? 'Уверенность в риске' : 'Предварительная оценка риска' }}</span>
         <div><strong>{{ riskScore }}</strong><small>из 100</small></div>
       </div>
       <div v-else-if="activeCall?.state === 'no_speech'" class="score-pending score-pending--notice">Без оценки риска</div>
@@ -489,16 +496,18 @@ function dismissToast(id: number): void {
       <div v-else class="status-hint"><span>02</span><p>Анализ начнётся<br />после загрузки файла</p></div>
     </section>
 
-    <template v-if="activeCall?.analysis">
-      <section class="card" aria-labelledby="timeline-title">
+    <template v-if="activeCall">
+      <section v-if="activeCall.analysis" class="card" aria-labelledby="timeline-title">
         <div class="card-heading"><div><p class="eyebrow">Динамика</p><h2 id="timeline-title">Уверенность по ходу разговора</h2></div></div>
-        <p class="timeline-caption">Оценки на конец обработанных фрагментов разговора.</p>
+        <p class="timeline-caption">Оценка с учётом разговора до указанного момента.</p>
         <div class="timeline" role="img" aria-label="График оценки риска"><div v-for="point in timelinePoints" :key="point.timestampMs" class="timeline-point"><div class="timeline-value">{{ point.score }}</div><div class="timeline-track"><div class="timeline-bar" :style="{ height: `${point.score}%` }"></div></div><time>{{ formatTime(point.timestampMs) }}</time></div></div>
       </section>
 
-      <section class="analysis-grid">
+      <section v-if="activeCall.transcript.length" class="analysis-grid" :class="{ 'analysis-grid--preview': activeCall.state !== 'completed' || !activeCall.analysis }">
         <article class="card" aria-labelledby="transcript-title">
           <div class="card-heading"><div><p class="eyebrow">Расшифровка</p><h2 id="transcript-title">Беседа</h2></div></div>
+          <p v-if="activeCall.state === 'failed'" class="transcript-notice">Сохранена частичная расшифровка. Обработка прервана, итоговая оценка не сформирована.</p>
+          <p v-else-if="activeCall.state !== 'completed'" class="transcript-notice">Текст и роли уточняются по мере обработки. Основания оценки появятся после завершения анализа.</p>
           <ol class="transcript-list">
             <li v-for="segment in activeCall.transcript" :key="segment.id" class="transcript-message"
               :class="{ 'transcript-message--client': segment.speaker === 'Клиент', 'transcript-message--unknown': !['Клиент', 'Оператор'].includes(segment.speaker) }">
@@ -507,7 +516,7 @@ function dismissToast(id: number): void {
             </li>
           </ol>
         </article>
-        <div class="factors-column">
+        <div v-if="activeCall.state === 'completed' && activeCall.analysis" class="factors-column">
           <article class="card factor-card" aria-labelledby="for-title">
             <div class="card-heading"><div><p class="eyebrow">Основания</p><h2 id="for-title">Что говорит за риск</h2></div></div>
             <ul v-if="activeCall.analysis.factorsFor.length" class="factor-list">
