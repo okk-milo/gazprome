@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { pageFromHash } from './navigation'
 import BurnoutView from './views/BurnoutView.vue'
+import AnalysisPlaceholder from './components/AnalysisPlaceholder.vue'
 import {
   createEmployee,
   createUpload,
@@ -53,6 +54,9 @@ const isUploading = ref(false)
 const isDeletingEmployee = ref(false)
 const isFileDragging = ref(false)
 const toasts = ref<Toast[]>([])
+const transcriptList = ref<HTMLOListElement | null>(null)
+let followTranscript = true
+let transcriptScrollTop = 0
 let pollingTimer: ReturnType<typeof setInterval> | null = null
 let snapshotPending = false
 let nextToastId = 0
@@ -76,6 +80,54 @@ const isTerminalCall = computed(() => {
   const state = activeCall.value?.state
   return state === 'completed' || state === 'no_speech' || state === 'failed'
 })
+const hasFinalAnalysis = computed(() => activeCall.value?.state === 'completed' && activeCall.value.analysis !== null)
+const isProcessing = computed(() => activeCall.value !== null && !isTerminalCall.value)
+const transcriptNotice = computed(() => {
+  if (activeCall.value?.state === 'failed') return 'Обработка прервана. Уже обработанные реплики сохранены.'
+  if (activeCall.value?.state === 'no_speech') return 'В этой записи не удалось распознать речь.'
+  if (activeCall.value?.state === 'completed') return 'Расшифровка разговора и определение ролей завершены.'
+  if (activeCall.value?.state === 'analysing') return 'Проверяем итоговую расшифровку. Обработанные реплики остаются на экране.'
+  return 'Реплики появляются после распознавания речи и определения роли собеседника.'
+})
+const placeholderMessage = computed(() => {
+  if (activeCall.value?.state === 'failed') return 'Анализ прерван. Итоговые данные не сформированы.'
+  if (activeCall.value?.state === 'no_speech') return 'Речь не распознана — данных для оценки нет.'
+  if (isProcessing.value) return 'Результат появится по мере обработки записи.'
+  return 'Загрузите запись, чтобы начать анализ.'
+})
+const factorsPlaceholderMessage = computed(() => isProcessing.value
+  ? 'Итоговые факторы появятся после анализа всей записи.'
+  : placeholderMessage.value)
+
+function updateTranscriptFollowing(): void {
+  if (activePage.value !== 'antifraud') return
+  const element = transcriptList.value
+  if (element) {
+    transcriptScrollTop = element.scrollTop
+    followTranscript = element.scrollHeight - element.clientHeight - element.scrollTop <= 32
+  }
+}
+
+watch([() => activeCall.value?.id, () => activeCall.value?.revision, activePage], async ([id, , page], [previousId, , previousPage]) => {
+  const changedCall = id !== previousId
+  const previousTop = changedCall ? 0 : previousPage === 'antifraud'
+    ? (transcriptList.value?.scrollTop ?? transcriptScrollTop)
+    : transcriptScrollTop
+  transcriptScrollTop = previousTop
+  if (changedCall) followTranscript = !isTerminalCall.value
+  if (page !== 'antifraud') return
+  await nextTick()
+  if (id !== activeCall.value?.id || activePage.value !== 'antifraud') return
+  const element = transcriptList.value
+  if (element) {
+    element.scrollTop = followTranscript ? element.scrollHeight : previousTop
+    transcriptScrollTop = element.scrollTop
+  }
+}, { flush: 'pre' })
+
+function speakerLabel(speaker: string): string | null {
+  return ['Оператор', 'Клиент', 'Менеджер', 'Автоответчик'].includes(speaker) ? speaker : null
+}
 const processingLabel = computed(() => {
   const state = activeCall.value?.state
   if (state === 'transcribing') return riskScore.value === null ? 'Расшифровываем запись' : 'Анализируем разговор'
@@ -496,50 +548,53 @@ function dismissToast(id: number): void {
       <div v-else class="status-hint"><span>02</span><p>Анализ начнётся<br />после загрузки файла</p></div>
     </section>
 
-    <template v-if="activeCall">
-      <section v-if="activeCall.analysis" class="card" aria-labelledby="timeline-title">
+      <section class="card timeline-card" aria-labelledby="timeline-title">
         <div class="card-heading"><div><p class="eyebrow">Динамика</p><h2 id="timeline-title">Уверенность по ходу разговора</h2></div></div>
         <p class="timeline-caption">Оценка с учётом разговора до указанного момента.</p>
-        <div class="timeline" role="img" aria-label="График оценки риска"><div v-for="point in timelinePoints" :key="point.timestampMs" class="timeline-point"><div class="timeline-value">{{ point.score }}</div><div class="timeline-track"><div class="timeline-bar" :style="{ height: `${point.score}%` }"></div></div><time>{{ formatTime(point.timestampMs) }}</time></div></div>
+        <div class="timeline-frame">
+          <div v-if="timelinePoints.length" class="timeline" role="img" aria-label="График оценки риска"><div v-for="point in timelinePoints" :key="point.timestampMs" class="timeline-point"><div class="timeline-value">{{ point.score }}</div><div class="timeline-track"><div class="timeline-bar" :style="{ height: `${point.score}%` }"></div></div><time>{{ formatTime(point.timestampMs) }}</time></div></div>
+          <AnalysisPlaceholder v-else kind="timeline" :message="placeholderMessage" :loading="isProcessing" />
+        </div>
       </section>
 
-      <section v-if="activeCall.transcript.length" class="analysis-grid" :class="{ 'analysis-grid--preview': activeCall.state !== 'completed' || !activeCall.analysis }">
-        <article class="card" aria-labelledby="transcript-title">
+      <section class="analysis-grid">
+        <article class="card transcript-card" aria-labelledby="transcript-title">
           <div class="card-heading"><div><p class="eyebrow">Расшифровка</p><h2 id="transcript-title">Беседа</h2></div></div>
-          <p v-if="activeCall.state === 'failed'" class="transcript-notice">Сохранена частичная расшифровка. Обработка прервана, итоговая оценка не сформирована.</p>
-          <p v-else-if="activeCall.state !== 'completed'" class="transcript-notice">Текст и роли уточняются по мере обработки. Основания оценки появятся после завершения анализа.</p>
-          <ol class="transcript-list">
-            <li v-for="segment in activeCall.transcript" :key="segment.id" class="transcript-message"
+          <p class="transcript-notice">{{ transcriptNotice }}</p>
+          <ol ref="transcriptList" class="transcript-list" tabindex="0" aria-label="Расшифровка разговора" @scroll.passive="updateTranscriptFollowing">
+            <li v-if="!activeCall?.transcript.length" class="transcript-placeholder"><AnalysisPlaceholder kind="transcript" :message="placeholderMessage" :loading="isProcessing" /></li>
+            <li v-for="segment in (activeCall?.transcript ?? [])" :key="segment.id" class="transcript-message"
               :class="{ 'transcript-message--client': segment.speaker === 'Клиент', 'transcript-message--unknown': !['Клиент', 'Оператор'].includes(segment.speaker) }">
-              <div><strong>{{ segment.speaker }}</strong><time>{{ formatTime(segment.startMs) }}</time></div>
+              <div><strong v-if="speakerLabel(segment.speaker)">{{ speakerLabel(segment.speaker) }}</strong><time>{{ formatTime(segment.startMs) }}</time></div>
               <p><template v-for="(piece, index) in highlightPieces(segment)" :key="index"><mark v-if="piece.highlighted">{{ piece.text }}</mark><template v-else>{{ piece.text }}</template></template></p>
             </li>
           </ol>
         </article>
-        <div v-if="activeCall.state === 'completed' && activeCall.analysis" class="factors-column">
+        <div class="factors-column">
           <article class="card factor-card" aria-labelledby="for-title">
             <div class="card-heading"><div><p class="eyebrow">Основания</p><h2 id="for-title">Что говорит за риск</h2></div></div>
-            <ul v-if="activeCall.analysis.factorsFor.length" class="factor-list">
+            <AnalysisPlaceholder v-if="!hasFinalAnalysis" kind="factors" :message="factorsPlaceholderMessage" :loading="isProcessing" />
+            <ul v-else-if="activeCall?.analysis?.factorsFor.length" class="factor-list">
               <li v-for="factor in activeCall.analysis.factorsFor" :key="factor.id"><strong>{{ factor.title }}</strong><p>{{ factor.description }}</p><span>{{ Math.round(factor.confidence * 100) }}%</span></li>
             </ul>
             <div v-else class="factor-empty">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
-              <div><strong>{{ isTerminalCall ? 'Основания не выявлены' : 'Основания пока не выявлены' }}</strong><p>В проанализированных фрагментах не найдены факторы, повышающие риск.</p></div>
+              <div><strong>Основания не выявлены</strong><p>В разговоре не найдены факторы, повышающие риск.</p></div>
             </div>
           </article>
           <article class="card factor-card factor-card--against" aria-labelledby="against-title">
             <div class="card-heading"><div><p class="eyebrow">Проверка</p><h2 id="against-title">Что снижает риск</h2></div></div>
-            <ul v-if="activeCall.analysis.factorsAgainst.length" class="factor-list">
+            <AnalysisPlaceholder v-if="!hasFinalAnalysis" kind="factors" :message="factorsPlaceholderMessage" :loading="isProcessing" />
+            <ul v-else-if="activeCall?.analysis?.factorsAgainst.length" class="factor-list">
               <li v-for="factor in activeCall.analysis.factorsAgainst" :key="factor.id"><strong>{{ factor.title }}</strong><p>{{ factor.description }}</p><span>{{ Math.round(factor.confidence * 100) }}%</span></li>
             </ul>
             <div v-else class="factor-empty">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
-              <div><strong>{{ isTerminalCall ? 'Снижающие риск факторы не выявлены' : 'Снижающие риск факторы пока не выявлены' }}</strong><p>В проанализированных фрагментах не найдены основания для снижения оценки.</p></div>
+              <div><strong>Снижающие риск факторы не выявлены</strong><p>В разговоре не найдены основания для снижения оценки.</p></div>
             </div>
           </article>
         </div>
       </section>
-    </template>
     </section>
     <BurnoutView v-if="activePage === 'burnout'" />
   </main>

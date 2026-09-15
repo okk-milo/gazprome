@@ -9,12 +9,13 @@ test('each factor list has a neutral, progress-aware empty state', () => {
   for (const [field, title] of [['factorsFor', 'for-title'], ['factorsAgainst', 'against-title']]) {
     const card = app.match(new RegExp(`<article[^>]+aria-labelledby="${title}"[\\s\\S]*?</article>`))?.[0]
     assert.ok(card)
-    assert.ok(card.includes(`v-if="activeCall.analysis.${field}.length"`))
+    assert.ok(card.includes(`v-else-if="activeCall?.analysis?.${field}.length"`))
+    assert.match(card, /<AnalysisPlaceholder v-if="!hasFinalAnalysis"/)
     assert.match(card, /<div v-else class="factor-empty">/)
-    assert.match(card, /isTerminalCall \? '[^']+не выявлены' : '[^']+пока не выявлены'/)
-    assert.match(card, /В проанализированных фрагментах/)
+    assert.match(card, /не выявлены<\/strong>/)
+    assert.match(card, /В разговоре/)
   }
-  assert.match(css, /\.factors-column\s*\{[^}]*align-content:\s*start/)
+  assert.match(css, /\.factors-column\s*\{[^}]*flex-direction:\s*column/)
 })
 
 test('history reserves the same sufficient status width at desktop and compact breakpoints', () => {
