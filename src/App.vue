@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { pageFromHash } from './navigation'
+import BurnoutView from './views/BurnoutView.vue'
 import {
   createEmployee,
   createUpload,
@@ -26,6 +28,15 @@ interface Toast {
 type TimelinePoint = NonNullable<CallSnapshot['analysis']>['timeline'][number]
 
 const TIMELINE_POINT_LIMIT = 24
+
+const activePage = ref(pageFromHash(window.location.hash))
+let antifraudInitialized = false
+
+function syncPageWithHash(): void {
+  activePage.value = pageFromHash(window.location.hash)
+  document.title = activePage.value === 'burnout' ? 'Выгорание — демонстрация | OKK' : 'Антифрод | OKK'
+  if (activePage.value === 'antifraud') void initializeAntifraud()
+}
 
 const employees = ref<Employee[]>([])
 const deals = ref<Deal[]>([])
@@ -83,7 +94,14 @@ const processingDescription = computed(() => {
   return 'Здесь появятся оценка риска, ключевые фразы и основания решения.'
 })
 
-onMounted(async () => {
+onMounted(() => {
+  window.addEventListener('hashchange', syncPageWithHash)
+  syncPageWithHash()
+})
+
+async function initializeAntifraud(): Promise<void> {
+  if (antifraudInitialized) return
+  antifraudInitialized = true
   try {
     const [loadedEmployees, loadedDeals, loadedHistory] = await Promise.all([
       listEmployees(),
@@ -100,9 +118,10 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
-})
+}
 
 onBeforeUnmount(() => {
+  window.removeEventListener('hashchange', syncPageWithHash)
   stopPolling()
   toastTimers.forEach((timer) => clearTimeout(timer))
 })
@@ -341,8 +360,18 @@ function dismissToast(id: number): void {
   <main class="app-shell">
     <header class="app-header">
       <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
-      <div><p class="eyebrow">Антифрод · анализ звонков</p><h1>Оценка риска воздействия мошенников</h1></div>
+      <div class="header-copy">
+        <p class="eyebrow">{{ activePage === 'burnout' ? 'Благополучие сотрудников · линия поддержки' : 'Антифрод · анализ звонков' }}</p>
+        <h1>{{ activePage === 'burnout' ? 'Состояние сотрудника' : 'Оценка риска воздействия мошенников' }}</h1>
+      </div>
     </header>
+
+    <nav class="page-switcher" aria-label="Разделы анализа">
+      <a href="#antifraud" :aria-current="activePage === 'antifraud' ? 'page' : undefined">Антифрод</a>
+      <a href="#burnout" :aria-current="activePage === 'burnout' ? 'page' : undefined">Выгорание</a>
+    </nav>
+
+    <section v-show="activePage === 'antifraud'" aria-label="Анализ звонков">
 
     <section class="upload-card" aria-labelledby="upload-title">
       <div class="section-heading">
@@ -503,5 +532,7 @@ function dismissToast(id: number): void {
         </div>
       </section>
     </template>
+    </section>
+    <BurnoutView v-if="activePage === 'burnout'" />
   </main>
 </template>
