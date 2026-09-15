@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import ContextPills from '../components/ContextPills.vue'
-import BurnoutDatasetCoverage from '../components/BurnoutDatasetCoverage.vue'
 import DecisionPanel from '../components/DecisionPanel.vue'
 import MetricTile from '../components/MetricTile.vue'
 import PeriodComparison from '../components/PeriodComparison.vue'
@@ -43,7 +42,6 @@ const context = computed(() => analysis.context.map(item => item.label === 'Да
 <template>
   <section class="burnout-demo" aria-label="Демонстрационная оценка выгорания">
     <ContextPills :items="context" />
-    <BurnoutDatasetCoverage :result="result" @retry="load" />
 
     <DecisionPanel
       label="Итог наблюдения"
@@ -54,9 +52,16 @@ const context = computed(() => analysis.context.map(item => item.label === 'Да
       :summary="analysis.decision.summary"
     />
 
-    <SectionCard v-if="result.state === 'ready'" :title="analysis.trajectory.label" :description="analysis.trajectory.description">
-      <p class="weekly-trajectory__period">Начало сценария: {{ result.dataset.periodStart }} · календарные даты условные</p>
-      <PeriodComparison :series="series" :labels="weeks.map(week => week.label)" :date-ranges="weeks.map(week => week.dates)" />
+    <SectionCard :title="analysis.trajectory.label" :description="analysis.trajectory.description">
+      <PeriodComparison v-if="result.state === 'ready'" :series="series" :labels="weeks.map(week => week.label)" :date-ranges="weeks.map(week => week.dates)" />
+      <div v-else class="weekly-trajectory__status" role="status" :aria-busy="result.state === 'loading'">
+        <p v-if="result.state === 'loading'">Загружаем графики…</p>
+        <p v-else-if="result.state === 'empty'">Данные ещё не опубликованы. Недельные графики появятся после их подготовки.</p>
+        <template v-else>
+          <p>Не удалось загрузить графики. Попробуйте ещё раз.</p>
+          <button type="button" @click="load">Повторить</button>
+        </template>
+      </div>
     </SectionCard>
 
     <div class="burnout-columns">

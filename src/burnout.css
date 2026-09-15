@@ -1,25 +1,18 @@
 .burnout-demo { display: flex; min-width: 0; flex-direction: column; gap: 18px; }
 .burnout-demo .section-card__body { min-width: 0; }
-.burnout-demo .dataset-coverage { padding: 16px 20px; border: 1px solid #e5e8f1; border-radius: 18px; background: #fbfcff; }
-.burnout-demo .dataset-coverage h2 { margin: 0 0 6px; font-size: 14px; color: #48516b; }
-.burnout-demo .dataset-coverage p { margin: 0; color: #71798b; font-size: 12px; line-height: 1.5; }
-.burnout-demo .dataset-coverage .dataset-coverage__hint { margin-top: 5px; font-size: 11px; }
-.burnout-demo .dataset-coverage button { padding: 6px 0; margin-top: 5px; background: transparent; color: #4164b7; font-size: 12px; }
-
-.burnout-demo .weekly-trajectory__direction {
-  margin: 0 0 18px;
-  padding: 12px 15px;
-  border-radius: 12px;
-  color: #505568;
-  background: #f4f5fa;
-  font-size: 13px;
-  line-height: 1.5;
-}
-.burnout-demo .weekly-trajectory__direction span { margin-right: 6px; font-weight: 700; }
+.burnout-demo .weekly-trajectory__status { padding: 20px; border-radius: 16px; color: #626a7c; background: #f5f6fa; font-size: 14px; line-height: 1.5; }
+.burnout-demo .weekly-trajectory__status p { margin: 0; }
+.burnout-demo .weekly-trajectory__status button { margin-top: 12px; padding: 10px 16px; border-radius: 10px; color: #fff; background: #315dcf; }
 .burnout-demo .weekly-trajectory__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .burnout-demo .weekly-chart { min-width: 0; padding: 20px; border: 1px solid #ececf1; border-radius: 20px; background: #fafafd; }
-.burnout-demo .weekly-chart h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font-size: 17px; line-height: 1.35; overflow-wrap: anywhere; }
+.burnout-demo .weekly-chart__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.burnout-demo .weekly-chart h3 { display: flex; min-width: 0; align-items: center; gap: 10px; margin: 0; font-size: 17px; line-height: 1.35; overflow-wrap: anywhere; }
 .burnout-demo .weekly-chart h3 i { flex: 0 0 13px; width: 13px; height: 13px; border-radius: 50%; }
+.burnout-demo .weekly-chart__info { display: inline-flex; flex: 0 0 40px; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 1px solid #e1e6f1; border-radius: 50%; color: #526590; background: #f0f3fa; }
+.burnout-demo .weekly-chart__info:hover { color: #315dcf; background: #e7edfc; }
+.burnout-demo .weekly-chart__info:focus-visible,
+.burnout-demo .weekly-chart-dialog button:focus-visible,
+.burnout-demo .weekly-trajectory__status button:focus-visible { outline: 2px solid #315dcf; outline-offset: 3px; }
 .burnout-demo .weekly-chart__description { min-height: 36px; margin: 0 0 30px; color: #777c88; font-size: 12px; line-height: 1.5; }
 .burnout-demo .weekly-chart__bars { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: clamp(4px, 1vw, 14px); }
 .burnout-demo .weekly-chart__column { min-width: 0; text-align: center; }
@@ -28,10 +21,14 @@
 .burnout-demo .weekly-chart__fill strong { position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); color: #454955; font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .burnout-demo .weekly-chart__missing { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%); color: #9298a7; }
 .burnout-demo .weekly-chart__week { display: block; margin-top: 12px; color: #818693; font-size: 11px; line-height: 1.3; font-variant-numeric: tabular-nums; }
-.burnout-demo .weekly-chart__help { margin-top: 18px; border-top: 1px solid #e9eaf0; padding-top: 12px; color: #777d8d; font-size: 12px; line-height: 1.5; }
-.burnout-demo .weekly-chart__help summary { width: fit-content; cursor: pointer; color: #525f86; }
-.burnout-demo .weekly-chart__help summary:focus-visible { outline: 2px solid #5a7de6; outline-offset: 4px; border-radius: 3px; }
-.burnout-demo .weekly-chart__help p { margin: 10px 0 0; }
+.burnout-demo .weekly-chart-dialog { position: fixed; inset: 0; width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 24px; overflow: auto; border: 1px solid #e5e8f1; border-radius: 24px; color: #25262c; background: #fff; box-shadow: 0 24px 80px #17234230; }
+.burnout-demo .weekly-chart-dialog::backdrop { background: #18213866; backdrop-filter: blur(3px); }
+.burnout-demo .weekly-chart-dialog__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.burnout-demo .weekly-chart-dialog__header h2 { min-width: 0; margin: 5px 0 0; font-size: 21px; line-height: 1.3; overflow-wrap: anywhere; }
+.burnout-demo .weekly-chart-dialog__close { display: inline-flex; flex: 0 0 36px; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border-radius: 50%; color: #606a81; background: #f0f3f8; }
+.burnout-demo .weekly-chart-dialog p { margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #657084; }
+.burnout-demo .weekly-chart-dialog .weekly-chart-dialog__direction { color: #344b7c; font-weight: 600; }
+.burnout-demo .weekly-chart-dialog__done { display: block; margin: 24px 0 0 auto; padding: 11px 22px; border-radius: 12px; color: #fff; background: #315dcf; }
 .burnout-demo .decision-panel__score { flex-wrap: wrap; max-width: 240px; }
 .burnout-demo .decision-panel__score small { display: block; width: 100%; margin-top: 7px; font-size: 11px; line-height: 1.4; font-weight: 500; color: #757986; letter-spacing: normal; }
 
@@ -779,10 +776,6 @@
 
 }
 .burnout-demo .weekly-chart__dates { color: #767e8c; font-size: 10px; text-align: center; overflow-wrap: anywhere; }
-.burnout-demo .weekly-trajectory__period { color: #767e8c; font-size: 13px; margin: 0 0 12px; }
-.burnout-demo .dataset-coverage__details { margin-top: 14px; color: #58657a; font-size: 13px; }
-.burnout-demo .dataset-coverage__details summary { cursor: pointer; }
-.burnout-demo .dataset-coverage__details li { margin-top: 6px; }
 .burnout-demo .observed-examples { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .burnout-demo .observed-examples li { background: #f5f7fc; padding: 18px; border-radius: 18px; overflow-wrap: anywhere; }
 .burnout-demo .observed-examples blockquote { margin: 12px 0; line-height: 1.55; }

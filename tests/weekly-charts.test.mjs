@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { readFile } from 'node:fs/promises'
 import { burnoutDemoData } from '../src/data/burnout.ts'
 import { adverseScore, chartValue, scenarioSeries } from '../src/services/trajectory.ts'
 
@@ -34,4 +35,29 @@ test('API scores bind by metric key rather than display order or mock values', (
   const result = scenarioSeries(burnoutDemoData.trajectory.series.toReversed(), [{exhaustion:1,distance:2,speechInconsistency:3,workload:4}])
   assert.deepEqual(result.map(item => item.values), [[4],[3],[2],[1]])
   assert.throws(() => scenarioSeries([{...burnoutDemoData.trajectory.series[0], key:'absent'}], []))
+})
+
+test('chart help uses named info buttons and a native modal instead of inline disclosures', async () => {
+  const component = await readFile(new URL('../src/components/PeriodComparison.vue', import.meta.url), 'utf8')
+  assert.match(component, /class="weekly-chart__header"/)
+  assert.match(component, /class="weekly-chart__info"[^>]*:aria-label=[^>]*aria-haspopup="dialog"/)
+  assert.match(component, /<dialog[^>]*aria-labelledby="weekly-chart-help-title"[^>]*aria-describedby="weekly-chart-help-description"/)
+  assert.match(component, /\.showModal\(\)/)
+  assert.match(component, /@close="selectedChart = null"/)
+  assert.match(component, /aria-label="Закрыть пояснение" autofocus/)
+  assert.match(component, /onBeforeUnmount\(closeHelp\)/)
+  assert.match(component, /@keydown.tab="keepFocusInDialog"/)
+  assert.match(component, /selectedChart.description/)
+  assert.doesNotMatch(component, /<details|<summary|На всех графиках:/)
+})
+
+test('removing dataset metadata retains deliberate chart loading, empty and error states', async () => {
+  const view = await readFile(new URL('../src/views/BurnoutView.vue', import.meta.url), 'utf8')
+  assert.doesNotMatch(view, /BurnoutDatasetCoverage|Начало сценария:|Состав по неделям|Записи для сценария/)
+  assert.match(view, /result.state === 'loading'/)
+  assert.match(view, /result.state === 'empty'/)
+  assert.match(view, /Не удалось загрузить графики/)
+  assert.match(view, /@click="load">Повторить/)
+  assert.match(view, /<PeriodComparison v-if="result.state === 'ready'"/)
+  assert.match(view, /Примеры из расшифровок/)
 })
