@@ -34,7 +34,7 @@ let antifraudInitialized = false
 
 function syncPageWithHash(): void {
   activePage.value = pageFromHash(window.location.hash)
-  document.title = activePage.value === 'burnout' ? 'Выгорание — демонстрация | OKK' : 'Антифрод | OKK'
+  document.title = activePage.value === 'burnout' ? 'Выгорание | OKK' : 'Антифрод | OKK'
   if (activePage.value === 'antifraud') void initializeAntifraud()
 }
 

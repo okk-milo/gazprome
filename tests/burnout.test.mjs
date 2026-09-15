@@ -11,7 +11,7 @@ test('burnout deep link and antifraud/default hashes resolve to separate pages',
 })
 
 test('restored burnout fixture retains the old example and eight weeks of data', () => {
-  assert.equal(burnoutDemoData.context[0].value, 'Сотрудник примера')
+  assert.equal(burnoutDemoData.context[0].value, 'Сотрудник 1')
   assert.equal(burnoutDemoData.decision.result.score, 64)
   assert.equal(burnoutDemoData.trajectory.xAxisLabels.length, 8)
   assert.equal(burnoutDemoData.trajectory.series.length, 4)

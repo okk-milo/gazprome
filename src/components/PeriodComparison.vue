@@ -74,8 +74,8 @@ onBeforeUnmount(closeHelp)
           </button>
         </div>
         <p id="weekly-chart-help-description" class="weekly-chart-dialog__direction">{{ selectedChart.description }}</p>
-        <p>Каждый столбец — одна неделя. 0 — минимальная, 100 — максимальная выраженность неблагоприятного показателя в сценарии.</p>
-        <p>Это баллы, не проценты вероятности и не результат диагностики. Значения заданы сценарием, а не рассчитаны по расшифровкам.</p>
+        <p>Каждый столбец — одна неделя. 0 — минимальная, 100 — максимальная выраженность неблагоприятного показателя.</p>
+        <p>Это баллы, не проценты вероятности и не результат диагностики.</p>
         <p v-if="selectedChart.key === 'workload'">Нагрузка описывает условия работы, а не состояние человека.</p>
         <button type="button" class="weekly-chart-dialog__done" @click="closeHelp">Понятно</button>
       </template>

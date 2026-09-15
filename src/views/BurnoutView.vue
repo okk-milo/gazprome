@@ -34,20 +34,17 @@ const metrics = computed(() => {
   const latest = result.value.state === 'ready' ? result.value.dataset.weeklyScores.at(-1) : null
   return analysis.metrics.map(item => ({ ...item, value: latest && (item.id === 'exhaustion' || item.id === 'distance') ? latest[item.id] : item.value }))
 })
-const context = computed(() => analysis.context.map(item => item.label === 'Данные'
-  ? { ...item, value: '8 недель · 56 дней', description: result.value.state === 'ready' ? `${result.value.dataset.coverage.accepted} диалогов проверено полностью; шкалы заданы сценарием` : 'состав набора пока недоступен' }
-  : item))
 </script>
 
 <template>
-  <section class="burnout-demo" aria-label="Демонстрационная оценка выгорания">
-    <ContextPills :items="context" />
+  <section class="burnout-demo" aria-label="Оценка выгорания">
+    <ContextPills :items="analysis.context" />
 
     <DecisionPanel
       label="Итог наблюдения"
       title="Изменение показателей за период"
       :score="analysis.decision.result.score"
-      score-label="Индекс выгорания · сценарий"
+      score-label="Индекс выгорания"
       tone="warning"
       :summary="analysis.decision.summary"
     />
@@ -68,7 +65,7 @@ const context = computed(() => analysis.context.map(item => item.label === 'Да
       <div class="burnout-columns__column">
         <SectionCard
           title="Шкалы состояния"
-          description="Условные шкалы сценария. Реальная оценка состояния требует отдельной самооценки, а не выводов по звонкам"
+          description="Оценка состояния требует отдельной самооценки и не заменяется анализом звонков"
         >
           <div class="metric-grid">
             <MetricTile v-for="item in metrics" :key="item.id" :item="item" />
@@ -76,7 +73,7 @@ const context = computed(() => analysis.context.map(item => item.label === 'Да
         </SectionCard>
         <SectionCard
           title="Контекст нагрузки"
-          description="Пример показателей рабочих условий. Нагрузка не приравнивается к состоянию сотрудника"
+          description="Показатели рабочих условий. Нагрузка не приравнивается к состоянию сотрудника"
         >
           <div class="workload-list">
             <MetricTile v-for="item in analysis.workload" :key="item.id" :item="item" />
@@ -85,7 +82,7 @@ const context = computed(() => analysis.context.map(item => item.label === 'Да
       </div>
 
       <div class="burnout-columns__column">
-        <SectionCard title="Примеры из расшифровок" description="Проверенные по тексту речевые события. Не показатели состояния человека; говорящий и качество аудио требуют отдельной проверки">
+        <SectionCard title="Фрагменты расшифровок" description="Проверенные по тексту речевые события. Не показатели состояния человека; говорящий и качество аудио требуют отдельной проверки">
           <ul v-if="result.state === 'ready' && result.dataset.observations.length" class="observed-examples">
             <li v-for="item in result.dataset.observations" :key="`${item.sourceId}:${item.segmentId}:${item.title}`">
               <strong>{{ item.title }}</strong>
@@ -93,7 +90,7 @@ const context = computed(() => analysis.context.map(item => item.label === 'Да
               <small>Запись {{ item.sourceId.slice(0, 8) }} · {{ Math.floor(item.startMs / 60000).toString().padStart(2, '0') }}:{{ Math.floor(item.startMs / 1000 % 60).toString().padStart(2, '0') }} · роль не подтверждена</small>
             </li>
           </ul>
-          <p v-else>Проверенные примеры пока недоступны. Отсутствие примеров не означает отсутствие речевых событий.</p>
+          <p v-else>Проверенные фрагменты пока недоступны. Их отсутствие не означает отсутствие речевых событий.</p>
         </SectionCard>
         <SectionCard title="Рекомендации для руководителя и HR" description="Варианты поддержки для обсуждения, не автоматические назначения">
           <ol class="recommendation-list">

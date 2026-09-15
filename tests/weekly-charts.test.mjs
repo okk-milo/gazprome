@@ -59,5 +59,23 @@ test('removing dataset metadata retains deliberate chart loading, empty and erro
   assert.match(view, /Не удалось загрузить графики/)
   assert.match(view, /@click="load">Повторить/)
   assert.match(view, /<PeriodComparison v-if="result.state === 'ready'"/)
-  assert.match(view, /Примеры из расшифровок/)
+  assert.match(view, /Фрагменты расшифровок/)
+})
+
+test('displayed burnout copy omits demo labels without changing data or scale limitations', async () => {
+  const demoWords = /сценари|демонстраци|тестов|\bmock\b|\bdemo\b|MVP|условн|примера/iu
+  const displayedData = JSON.stringify({context:burnoutDemoData.context,decision:burnoutDemoData.decision,trajectory:burnoutDemoData.trajectory,metrics:burnoutDemoData.metrics,workload:burnoutDemoData.workload,actions:burnoutDemoData.actions})
+  assert.doesNotMatch(displayedData, demoWords)
+  for (const file of ['views/BurnoutView.vue', 'components/PeriodComparison.vue']) {
+    const source = await readFile(new URL(`../src/${file}`, import.meta.url), 'utf8')
+    const template = source.slice(source.indexOf('<template>')).replace(/class="[^"]*"/g, '')
+    assert.doesNotMatch(template, demoWords)
+  }
+  const app = await readFile(new URL('../src/App.vue', import.meta.url), 'utf8')
+  assert.match(app, /'Выгорание \| OKK'/)
+  assert.doesNotMatch(app, /Выгорание — демонстрация/)
+  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
+  assert.doesNotMatch(html, demoWords)
+  const help = await readFile(new URL('../src/components/PeriodComparison.vue', import.meta.url), 'utf8')
+  assert.match(help, /не проценты вероятности и не результат диагностики/)
 })
