@@ -1,7 +1,4 @@
 .burnout-demo { display: flex; min-width: 0; flex-direction: column; gap: 18px; }
-.burnout-demo__notice { padding: 14px 18px; border: 1px solid #dce5f8; border-radius: 16px; color: #4c6090; background: #f1f5fd; }
-.burnout-demo__notice strong { display: block; margin-bottom: 4px; font-size: 13px; }
-.burnout-demo__notice p { margin: 0; font-size: 13px; line-height: 1.5; }
 .burnout-demo .section-card__body { min-width: 0; }
 
 .burnout-demo .context-pills {

@@ -25,11 +25,13 @@ test('restored burnout fixture retains the old example and eight weeks of data',
   assert.equal(burnoutDemoData.actions.length, 3)
 })
 
-test('burnout is explicitly demo-only and does not call analysis APIs or start polling', async () => {
+test('burnout keeps static data without the removed notice or analysis API calls', async () => {
   const view = await readFile(new URL('../src/views/BurnoutView.vue', import.meta.url), 'utf8')
-  assert.match(view, /Демонстрационные данные/)
-  assert.match(view, /Не связан с загруженными звонками/)
+  assert.match(view, /burnoutDemoData as analysis/)
+  assert.doesNotMatch(view, /Демонстрационные данные|Пример прежнего шаблона|Не связан с загруженными звонками|burnout-demo__notice/)
   assert.doesNotMatch(view, /fetch\(|services\/|setInterval|setTimeout|burnoutAnalysisId/)
+  const css = await readFile(new URL('../src/burnout.css', import.meta.url), 'utf8')
+  assert.doesNotMatch(css, /burnout-demo__notice/)
 })
 
 test('navigation preserves the antifraud tree and loads its data only when opened', async () => {

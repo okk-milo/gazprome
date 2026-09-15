@@ -11,11 +11,6 @@ import '../burnout.css'
 
 <template>
   <section class="burnout-demo" aria-label="Демонстрационная оценка выгорания">
-    <aside class="burnout-demo__notice" aria-label="Демонстрационные данные">
-      <strong>Демонстрационные данные</strong>
-      <p>Пример прежнего шаблона. Не связан с загруженными звонками и не является оценкой реального сотрудника.</p>
-    </aside>
-
     <ContextPills :items="analysis.context" />
 
     <DecisionPanel
