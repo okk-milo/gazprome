@@ -13,6 +13,8 @@ export interface ChartSeries {
   color: string
   dashed?: boolean
   values: number[]
+  description: string
+  direction: 'higher-is-worse'
 }
 
 export interface MetricItem {

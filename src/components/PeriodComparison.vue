@@ -1,57 +1,33 @@
 <script setup lang="ts">
 import type { ChartSeries } from '../types/analysis'
-
-interface PeriodComparisonProps {
-  series: ChartSeries[]
-  labels: string[]
-}
-
-const props = defineProps<PeriodComparisonProps>()
-
-function getSeriesValue(series: ChartSeries, index: number): number {
-  return series.values[index] ?? 0
-}
-
-function getFillStyle(series: ChartSeries): Record<string, string> {
-  if (series.dashed) {
-    return {
-      background: `repeating-linear-gradient(90deg, ${series.color} 0 7px, rgba(154, 167, 184, 0.28) 7px 11px)`,
-    }
-  }
-
-  return { background: series.color }
-}
-
-function getValueFillStyle(series: ChartSeries, index: number): Record<string, string> {
-  const value = getSeriesValue(series, index)
-  const style = getFillStyle(series)
-
-  return {
-    width: `${value}%`,
-    background: style.background,
-  }
-}
+import { chartValue } from '../services/trajectory'
+defineProps<{ series: ChartSeries[]; labels: string[]; dateRanges?: string[] }>()
 </script>
 
 <template>
-  <div class="period-comparison" aria-label="Сравнение периодов по шкалам">
-    <section v-for="(label, index) in props.labels" :key="label" class="period-comparison__item">
-      <h3>{{ label }}</h3>
-
-      <div v-for="item in props.series" :key="item.key" class="period-comparison__row">
-        <span class="period-comparison__series">
-          <i :style="getFillStyle(item)" aria-hidden="true"></i>
-          {{ item.label }}
-        </span>
-        <div
-          class="period-comparison__track"
-          :aria-label="`${item.label}: ${getSeriesValue(item, index)}%`"
-          role="img"
-        >
-          <span :style="getValueFillStyle(item, index)"></span>
+  <div class="weekly-trajectory">
+    <p class="weekly-trajectory__direction"><span aria-hidden="true">↑</span> На всех графиках: выше значение — хуже показатель</p>
+    <div class="weekly-trajectory__grid">
+      <section v-for="item in series" :key="item.key" class="weekly-chart" :aria-labelledby="`chart-${item.key}`">
+        <h3 :id="`chart-${item.key}`"><i :style="{ background: item.color }" aria-hidden="true"></i>{{ item.label }}</h3>
+        <p class="weekly-chart__description">{{ item.description }}</p>
+        <div class="weekly-chart__bars" role="list" :aria-label="`${item.label}, шкала от 0 до 100 баллов`">
+          <div v-for="(label, index) in labels" :key="label" class="weekly-chart__column" role="listitem">
+            <div class="weekly-chart__track" :aria-label="`${label}: ${chartValue(item.values, index) ?? 'нет данных'}${chartValue(item.values, index) === null ? '' : ' из 100'}`">
+              <span v-if="chartValue(item.values, index) !== null" class="weekly-chart__fill" :style="{ height: `${chartValue(item.values, index)}%`, background: item.color }">
+                <strong>{{ chartValue(item.values, index) }}</strong>
+              </span>
+              <span v-else class="weekly-chart__missing">—</span>
+            </div>
+            <span class="weekly-chart__week">{{ label.replace('Неделя ', 'Нед. ') }}</span>
+            <span v-if="dateRanges?.[index]" class="weekly-chart__dates">{{ dateRanges[index] }}</span>
+          </div>
         </div>
-        <strong>{{ getSeriesValue(item, index) }}%</strong>
-      </div>
-    </section>
+        <details class="weekly-chart__help">
+          <summary>Как читать шкалу</summary>
+          <p>0 — минимальная, 100 — максимальная выраженность неблагоприятного показателя в сценарии. Это баллы, не проценты вероятности и не результат диагностики. Нагрузка описывает условия работы, а не состояние человека.</p>
+        </details>
+      </section>
+    </div>
   </div>
 </template>

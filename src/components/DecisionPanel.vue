@@ -5,6 +5,7 @@ interface DecisionPanelProps {
   label: string
   title: string
   score: number
+  scoreLabel?: string
   tone: StatusTone
   summary: string
   recommendation?: string
@@ -32,6 +33,7 @@ const props = defineProps<DecisionPanelProps>()
     <div class="decision-panel__score">
       <strong>{{ props.score }}</strong>
       <span>из 100</span>
+      <small v-if="props.scoreLabel">{{ props.scoreLabel }}</small>
     </div>
 
     <p class="decision-panel__summary">{{ props.summary }}</p>

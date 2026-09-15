@@ -11,7 +11,7 @@ test('burnout deep link and antifraud/default hashes resolve to separate pages',
 })
 
 test('restored burnout fixture retains the old example and eight weeks of data', () => {
-  assert.equal(burnoutDemoData.context[0].value, 'Дмитрий С.')
+  assert.equal(burnoutDemoData.context[0].value, 'Сотрудник примера')
   assert.equal(burnoutDemoData.decision.result.score, 64)
   assert.equal(burnoutDemoData.trajectory.xAxisLabels.length, 8)
   assert.equal(burnoutDemoData.trajectory.series.length, 4)
@@ -25,11 +25,13 @@ test('restored burnout fixture retains the old example and eight weeks of data',
   assert.equal(burnoutDemoData.actions.length, 3)
 })
 
-test('burnout keeps static data without the removed notice or analysis API calls', async () => {
+test('burnout loads its own dataset without the removed notice or antifraud analysis calls', async () => {
   const view = await readFile(new URL('../src/views/BurnoutView.vue', import.meta.url), 'utf8')
   assert.match(view, /burnoutDemoData as analysis/)
   assert.doesNotMatch(view, /Демонстрационные данные|Пример прежнего шаблона|Не связан с загруженными звонками|burnout-demo__notice/)
-  assert.doesNotMatch(view, /fetch\(|services\/|setInterval|setTimeout|burnoutAnalysisId/)
+  assert.match(view, /getBurnoutDataset/)
+  assert.match(view, /v-if="result.state === 'ready'"/)
+  assert.doesNotMatch(view, /setInterval|setTimeout|burnoutAnalysisId|createCall|uploadCall/)
   const css = await readFile(new URL('../src/burnout.css', import.meta.url), 'utf8')
   assert.doesNotMatch(css, /burnout-demo__notice/)
 })
