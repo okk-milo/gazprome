@@ -6,13 +6,14 @@ import vue from '@vitejs/plugin-vue'
 
 const states = ['transcribing', 'analysing', 'completed', 'completed', 'completed']
 const names = ['Расшифровка.wav', 'Промежуточный результат.wav', 'Без факторов.wav', 'Только проверка.wav', 'С основаниями.wav']
+const timelineSizes = [0, 1, 2, 8, 24]
 const factor = { id: 'factor', title: 'Пример фактора', description: 'Тестовое описание для проверки вёрстки.', confidence: 0.85, segmentId: 'segment' }
 const snapshots = states.map((state, index) => ({
   id: String(index), state, revision: 1, progress: state === 'completed' ? 100 : 40,
   transcript: [{ id: 'segment', startMs: 0, endMs: 6000, speaker: 'Оператор', text: 'Тестовая реплика для проверки интерфейса.', highlightRanges: [] }],
   analysis: state === 'transcribing' ? null : {
     score: 20, factorsFor: index === 4 ? [factor] : [], factorsAgainst: index >= 3 ? [factor] : [],
-    timeline: [{ timestampMs: 6000, score: 20 }], modelVersion: 'local-ui-fixture',
+    timeline: Array.from({ length: timelineSizes[index] }, (_, pointIndex) => ({ timestampMs: (pointIndex + 1) * 10000, score: 20 })), modelVersion: 'local-ui-fixture',
   },
 }))
 const history = snapshots.map((snapshot, index) => ({

@@ -552,7 +552,7 @@ function dismissToast(id: number): void {
         <div class="card-heading"><div><p class="eyebrow">Динамика</p><h2 id="timeline-title">Уверенность по ходу разговора</h2></div></div>
         <p class="timeline-caption">Оценка с учётом разговора до указанного момента.</p>
         <div class="timeline-frame">
-          <div v-if="timelinePoints.length" class="timeline" role="img" aria-label="График оценки риска"><div v-for="point in timelinePoints" :key="point.timestampMs" class="timeline-point"><div class="timeline-value">{{ point.score }}</div><div class="timeline-track"><div class="timeline-bar" :style="{ height: `${point.score}%` }"></div></div><time>{{ formatTime(point.timestampMs) }}</time></div></div>
+          <div v-if="timelinePoints.length" class="timeline" :style="{ '--timeline-columns': Math.max(8, timelinePoints.length), '--timeline-compact-columns': Math.max(4, timelinePoints.length) }" role="img" aria-label="График оценки риска"><div v-for="point in timelinePoints" :key="point.timestampMs" class="timeline-point"><div class="timeline-value">{{ point.score }}</div><div class="timeline-track"><div class="timeline-bar" :style="{ height: `${point.score}%` }"></div></div><time>{{ formatTime(point.timestampMs) }}</time></div></div>
           <AnalysisPlaceholder v-else kind="timeline" :message="placeholderMessage" :loading="isProcessing" />
         </div>
       </section>

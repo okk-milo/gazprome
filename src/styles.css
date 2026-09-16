@@ -403,8 +403,8 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 .card-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 
 .timeline-frame { height: 220px; }
-.timeline { display: flex; align-items: end; height: 100%; max-width: 100%; gap: 8px; overflow: hidden; padding: 20px 8px 0; border-bottom: 1px solid #e7e8ed; }
-.timeline-point { display: grid; flex: 1 1 0; min-width: 0; grid-template-rows: auto 1fr auto; align-items: end; gap: 7px; }
+.timeline { display: grid; grid-template-columns: repeat(var(--timeline-columns, 8), minmax(0, 1fr)); align-items: end; height: 100%; max-width: 100%; gap: 8px; overflow: hidden; padding: 8px 8px 0; border-bottom: 1px solid #e7e8ed; }
+.timeline-point { display: grid; min-width: 0; grid-template-rows: auto 1fr auto; align-items: end; gap: 7px; }
 .timeline-value,
 .timeline time { overflow: hidden; color: #6e707a; font-size: 11px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .timeline-track { height: 160px; display: flex; align-items: flex-end; }
@@ -492,6 +492,7 @@ h2 { margin-bottom: 6px; font-size: 20px; letter-spacing: -0.03em; }
 }
 
 @media (max-width: 560px) {
+  .timeline { grid-template-columns: repeat(var(--timeline-compact-columns, 4), minmax(0, 1fr)); }
   .section-heading,
   .upload-footer { align-items: start; flex-direction: column; }
 
