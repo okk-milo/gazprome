@@ -8,6 +8,8 @@ export interface ContextItem {
 }
 
 export interface ChartSeries {
+  max?: number
+  unit?: string
   key: string
   label: string
   color: string

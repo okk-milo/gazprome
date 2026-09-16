@@ -420,7 +420,7 @@ function dismissToast(id: number): void {
     <header class="app-header">
       <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
       <div class="header-copy">
-        <p class="eyebrow">{{ activePage === 'burnout' ? 'Технический анализ · линия поддержки' : 'Антифрод · анализ звонков' }}</p>
+        <p class="eyebrow">{{ activePage === 'burnout' ? 'Обзор разговоров · линия поддержки' : 'Антифрод · анализ звонков' }}</p>
         <h1>{{ activePage === 'burnout' ? 'Динамика разговоров' : 'Оценка риска воздействия мошенников' }}</h1>
       </div>
       <nav class="page-switcher" aria-label="Разделы анализа">

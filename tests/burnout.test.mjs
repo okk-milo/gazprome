@@ -29,7 +29,7 @@ test('burnout loads its own dataset without the removed notice or antifraud anal
   const view = await readFile(new URL('../src/views/BurnoutView.vue', import.meta.url), 'utf8')
   assert.doesNotMatch(view, /burnoutDemoData|analysis\.decision|analysis\.workload/)
   assert.doesNotMatch(view, /Демонстрационные данные|Пример прежнего шаблона|Не связан с загруженными звонками|burnout-demo__notice/)
-  assert.match(view, /getTechnicalDataset/)
+  assert.match(view, /getConversationReport/)
   assert.match(view, /v-if="result.state === 'ready'"/)
   assert.doesNotMatch(view, /setInterval|setTimeout|burnoutAnalysisId|createCall|uploadCall/)
   const css = await readFile(new URL('../src/burnout.css', import.meta.url), 'utf8')
@@ -49,7 +49,7 @@ test('navigation preserves the antifraud tree and loads its data only when opene
 test('restored burnout styles cannot override the antifraud page', async () => {
   const css = await readFile(new URL('../src/burnout.css', import.meta.url), 'utf8')
   postcss.parse(css).walkRules(rule => {
-    assert.ok(rule.selectors.every(selector => /^\.burnout-demo(?:\b|__)/.test(selector)), rule.selector)
+    assert.ok(rule.selectors.every(selector => /^\.(?:burnout-demo|conversation-report)(?:\b|__)/.test(selector)), rule.selector)
   })
 })
 

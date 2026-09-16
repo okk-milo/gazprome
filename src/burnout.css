@@ -786,9 +786,49 @@
 .burnout-demo .observed-examples li { background: #f5f7fc; padding: 18px; border-radius: 18px; overflow-wrap: anywhere; }
 .burnout-demo .observed-examples blockquote { margin: 12px 0; line-height: 1.55; }
 .burnout-demo .observed-examples small { color: #707a8b; }
-.burnout-demo .technical-examples { max-height: 620px; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding-right: 8px; }
-.burnout-demo .technical-counts { margin: 0; display: grid; gap: 18px; }
-.burnout-demo .technical-counts div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 16px; border-bottom: 1px solid #eceef4; padding-bottom: 14px; }
-.burnout-demo .technical-counts dt { font-size: 14px; overflow-wrap: anywhere; }
-.burnout-demo .technical-counts dd { margin: 0; font-weight: 650; font-variant-numeric: tabular-nums; }
-.burnout-demo .technical-counts small { grid-column: 1 / -1; color: #707a8b; }
+.conversation-report .report-summary { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: start; gap: 20px; padding: 28px; border: 1px solid #dedff8; border-radius: 28px; background: linear-gradient(115deg, #fff, #f2f0ff 85%, #e9f5fa); }
+.conversation-report .report-summary__icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; color: #7461cd; background: #e8e2ff; }
+.conversation-report .report-summary__icon svg { width: 28px; height: 28px; }
+.conversation-report .report-eyebrow { margin: 0 0 7px; font-size: 12px; font-weight: 650; color: #766599; }
+.conversation-report .report-summary h2 { margin: 0 0 12px; font-size: 26px; letter-spacing: -.035em; }
+.conversation-report .report-summary__text { margin: 0; max-width: 880px; font-size: 15px; color: #66647a; line-height: 1.6; }
+.conversation-report .report-summary__period { padding: 9px 14px; border-radius: 99px; background: #fff9; color: #7762bb; font-size: 13px; white-space: nowrap; }
+.conversation-report .weekly-chart { background: linear-gradient(150deg, #fff, #f8f9fd); padding: 22px; }
+.conversation-report .weekly-chart__description { min-height: 36px; margin-bottom: 12px; }
+.conversation-report .weekly-chart__scale { display: flex; justify-content: space-between; margin-bottom: 30px; color: #858b9a; font-size: 11px; }
+.conversation-report .weekly-chart__track { height: 150px; background: #eef0f68c; }
+.conversation-report .weekly-chart__dates { display: block; margin-top: 5px; font-size: 10px; }
+.conversation-report .report-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.conversation-report .report-metric { min-width: 0; padding: 20px; border: 1px solid color-mix(in srgb, var(--metric-color) 24%, white); border-radius: 20px; background: linear-gradient(150deg, white, color-mix(in srgb, var(--metric-color) 7%, white)); }
+.conversation-report .report-metric h3 { display: flex; align-items: flex-start; gap: 8px; min-height: 40px; margin: 0 0 14px; font-size: 14px; line-height: 1.4; }
+.conversation-report .report-metric h3 i { flex: 0 0 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: var(--metric-color); }
+.conversation-report .report-metric__value { display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px; margin: 0 0 16px; font-size: 34px; font-weight: 720; font-variant-numeric: tabular-nums; line-height: 1.1; letter-spacing: -.04em; }
+.conversation-report .report-metric__value small { font-size: 12px; font-weight: 500; letter-spacing: 0; color: #7c8090; }
+.conversation-report .report-metric__track { height: 6px; margin-bottom: 14px; border-radius: 8px; background: color-mix(in srgb, var(--metric-color) 13%, white); overflow: hidden; }
+.conversation-report .report-metric__track span { display: block; height: 100%; background: var(--metric-color); border-radius: inherit; }
+.conversation-report .report-metric__change { display: inline-block; padding: 5px 8px; border-radius: 8px; color: #4f5670; background: #fff9; font-size: 12px; font-variant-numeric: tabular-nums; }
+.conversation-report .report-metric__description { margin: 12px 0 0; color: #7c8191; font-size: 12px; line-height: 1.5; }
+.conversation-report .report-bottom { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.conversation-report .report-workload { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.conversation-report .report-workload article { min-width: 0; padding: 16px; border-radius: 16px; border-top: 3px solid var(--metric-color); background: #f8f9fc; }
+.conversation-report .report-workload h3 { min-height: 36px; margin: 0 0 10px; font-size: 13px; line-height: 1.4; color: #5a6275; }
+.conversation-report .report-workload p { display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px; margin: 0 0 8px; }
+.conversation-report .report-workload strong { font-size: 28px; font-variant-numeric: tabular-nums; }
+.conversation-report .report-workload span, .conversation-report .report-workload small { color: #80889a; font-size: 11px; line-height: 1.45; }
+.conversation-report .recommendation-list { gap: 22px; }
+.conversation-report .recommendation-list span { color: #7860c5; background: #eee8fc; }
+.conversation-report .recommendation-list p { line-height: 1.65; margin: 0; }
+@media (max-width: 1120px) { .conversation-report .report-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 780px) { .conversation-report .report-bottom { grid-template-columns: minmax(0, 1fr); } .conversation-report .weekly-chart { padding: 18px 12px; } }
+@media (max-width: 560px) {
+  .conversation-report .context-pills { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .conversation-report .context-pill { padding: 14px; }
+  .conversation-report .report-summary { grid-template-columns: 40px minmax(0, 1fr); padding: 20px; gap: 12px; }
+  .conversation-report .report-summary__icon { width: 40px; height: 40px; border-radius: 12px; }
+  .conversation-report .report-summary h2 { font-size: 22px; }
+  .conversation-report .report-summary__period { display: none; }
+  .conversation-report .report-metrics { grid-template-columns: minmax(0, 1fr); }
+  .conversation-report .report-metric h3 { min-height: 0; }
+  .conversation-report .report-workload { gap: 8px; }
+  .conversation-report .report-workload article { padding: 12px; }
+}

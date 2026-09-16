@@ -10,9 +10,9 @@ export function scenarioSeries(templates: readonly ChartSeries[], weeks: readonl
   })
 }
 
-export function chartValue(values: readonly (number | null)[], index: number): number | null {
+export function chartValue(values: readonly (number | null)[], index: number, maximum = 100): number | null {
   const value = values[index]
-  if (value == null || !Number.isFinite(value) || value < 0 || value > 100) return null
+  if (value == null || !Number.isFinite(value) || value < 0 || value > maximum) return null
   return value
 }
 

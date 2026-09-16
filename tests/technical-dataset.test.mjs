@@ -40,12 +40,12 @@ test('missing comparison periods and excluded sources cannot carry measured scor
   response.dataset.sources[0].week = null; response.dataset.sources[0].index = null
   assert.equal(parseTechnicalResponse(response).dataset.coverage.excluded, 1)
 })
-test('technical UI only renders measured API numbers and scrollable source excerpts', async () => {
+test('report UI renders calculated values without obsolete technical panels or overall index', async () => {
   const view = await readFile(new URL('../src/views/BurnoutView.vue', import.meta.url), 'utf8')
   assert.doesNotMatch(view, /burnoutDemoData|analysis\.decision|analysis\.metrics|analysis\.workload/)
-  assert.match(view, /data\.overall\.index/)
-  assert.match(view, /w\.measures\?\.scores\[chart.key\] \?\? null/)
-  assert.match(view, /data\.observations/)
-  const css = await readFile(new URL('../src/burnout.css', import.meta.url), 'utf8')
-  assert.match(css, /\.technical-examples \{[^}]*max-height: 620px;[^}]*overflow-y: auto/)
+  assert.doesNotMatch(view, /data\.overall\.index|data\.observations|Основания расчёта|Фрагменты расшифровок/)
+  assert.match(view, /getConversationReport/)
+  assert.match(view, /reportSeries\(data.value\)/)
+  assert.match(view, /Контекст нагрузки/)
+  assert.match(view, /Рекомендации/)
 })

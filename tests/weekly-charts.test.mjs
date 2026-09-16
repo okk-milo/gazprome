@@ -61,10 +61,10 @@ test('removing dataset metadata retains deliberate chart loading, empty and erro
   assert.match(view, /Не удалось загрузить графики/)
   assert.match(view, /@click="load">Повторить/)
   assert.match(view, /<PeriodComparison v-if="result.state === 'ready'"/)
-  assert.match(view, /Фрагменты расшифровок/)
+  assert.doesNotMatch(view, /Фрагменты расшифровок|Основания расчёта/)
 })
 
-test('displayed copy omits demo banners and explains technical ordering in chart help', async () => {
+test('displayed copy omits demo banners and technical provenance in chart help', async () => {
   const demoWords = /сценари|демонстраци|тестов|\bmock\b|\bdemo\b|MVP|примера/iu
   const displayedData = JSON.stringify({context:burnoutDemoData.context,decision:burnoutDemoData.decision,trajectory:burnoutDemoData.trajectory,metrics:burnoutDemoData.metrics,workload:burnoutDemoData.workload,actions:burnoutDemoData.actions})
   assert.doesNotMatch(displayedData, demoWords)
@@ -80,6 +80,5 @@ test('displayed copy omits demo banners and explains technical ordering in chart
   assert.doesNotMatch(html, demoWords)
   const help = await readFile(new URL('../src/components/PeriodComparison.vue', import.meta.url), 'utf8')
   assert.match(help, /не проценты вероятности и не результат диагностики/)
-  assert.match(help, /Даты условные: записи распределены/)
-  assert.match(help, /не является оценкой человека/)
+  assert.doesNotMatch(help, /Даты условные|Сводный индекс:|ASR|заданы вручную/)
 })
