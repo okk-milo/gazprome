@@ -15,7 +15,7 @@ const props = defineProps<MetricTileProps>()
       <em>{{ props.item.delta }}</em>
     </div>
     <div class="metric-tile__value">
-      {{ props.item.value }}<small v-if="props.item.unit">{{ props.item.unit }}</small>
+      {{ new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(props.item.value) }}<small v-if="props.item.unit">{{ props.item.unit }}</small>
     </div>
     <div class="metric-tile__bar" aria-hidden="true">
       <span :style="{ width: `${props.item.value}%` }"></span>

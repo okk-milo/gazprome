@@ -27,9 +27,9 @@ test('restored burnout fixture retains the old example and eight weeks of data',
 
 test('burnout loads its own dataset without the removed notice or antifraud analysis calls', async () => {
   const view = await readFile(new URL('../src/views/BurnoutView.vue', import.meta.url), 'utf8')
-  assert.match(view, /burnoutDemoData as analysis/)
+  assert.doesNotMatch(view, /burnoutDemoData|analysis\.decision|analysis\.workload/)
   assert.doesNotMatch(view, /Демонстрационные данные|Пример прежнего шаблона|Не связан с загруженными звонками|burnout-demo__notice/)
-  assert.match(view, /getBurnoutDataset/)
+  assert.match(view, /getTechnicalDataset/)
   assert.match(view, /v-if="result.state === 'ready'"/)
   assert.doesNotMatch(view, /setInterval|setTimeout|burnoutAnalysisId|createCall|uploadCall/)
   const css = await readFile(new URL('../src/burnout.css', import.meta.url), 'utf8')

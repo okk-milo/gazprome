@@ -12,9 +12,10 @@ export interface ChartSeries {
   label: string
   color: string
   dashed?: boolean
-  values: number[]
+  values: Array<number | null>
   description: string
-  direction: 'higher-is-worse'
+  direction: 'higher-is-worse' | 'higher-is-more'
+  help?: string
 }
 
 export interface MetricItem {

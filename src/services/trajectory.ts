@@ -10,10 +10,10 @@ export function scenarioSeries(templates: readonly ChartSeries[], weeks: readonl
   })
 }
 
-export function chartValue(values: readonly number[], index: number): number | null {
+export function chartValue(values: readonly (number | null)[], index: number): number | null {
   const value = values[index]
   if (value == null || !Number.isFinite(value) || value < 0 || value > 100) return null
-  return Math.round(value)
+  return value
 }
 
 export function adverseScore(value: number, sourceDirection: 'positive' | 'adverse'): number {

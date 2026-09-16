@@ -562,6 +562,7 @@
 
 .burnout-demo .metric-tile__topline {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
@@ -576,7 +577,8 @@
 }
 
 .burnout-demo .metric-tile__topline em {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  overflow-wrap: anywhere;
   padding: 3px 6px;
   border-radius: 999px;
   font-size: 9px;
@@ -780,3 +782,9 @@
 .burnout-demo .observed-examples li { background: #f5f7fc; padding: 18px; border-radius: 18px; overflow-wrap: anywhere; }
 .burnout-demo .observed-examples blockquote { margin: 12px 0; line-height: 1.55; }
 .burnout-demo .observed-examples small { color: #707a8b; }
+.burnout-demo .technical-examples { max-height: 620px; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding-right: 8px; }
+.burnout-demo .technical-counts { margin: 0; display: grid; gap: 18px; }
+.burnout-demo .technical-counts div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 16px; border-bottom: 1px solid #eceef4; padding-bottom: 14px; }
+.burnout-demo .technical-counts dt { font-size: 14px; overflow-wrap: anywhere; }
+.burnout-demo .technical-counts dd { margin: 0; font-weight: 650; font-variant-numeric: tabular-nums; }
+.burnout-demo .technical-counts small { grid-column: 1 / -1; color: #707a8b; }

@@ -1,8 +1,10 @@
 import { parseDatasetResponse, type DatasetResponse } from './burnout-dataset'
+import { parseTechnicalResponse, type TechnicalResponse } from './technical-dataset'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? '/api'
 
 export function getBurnoutDataset(): Promise<DatasetResponse> { return request('/v1/burnout/dataset', parseDatasetResponse, { signal: AbortSignal.timeout(12000) }) }
+export function getTechnicalDataset(): Promise<TechnicalResponse> { return request('/v1/burnout/technical', parseTechnicalResponse, { signal: AbortSignal.timeout(12000) }) }
 
 export interface Employee { id: string; name: string }
 export interface Deal { id: string; title: string; employeeId: string }

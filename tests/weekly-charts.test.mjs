@@ -23,6 +23,8 @@ test('positive source measurements are inverted, adverse measurements are preser
 test('missing or invalid weekly readings are not displayed as a reassuring zero', () => {
   assert.equal(chartValue([0], 0), 0)
   assert.equal(chartValue([100], 0), 100)
+  assert.equal(chartValue([0.12], 0), 0.12)
+  assert.equal(chartValue([98.76], 0), 98.76)
   for (const values of [[], [NaN], [Infinity], [-1], [101]]) assert.equal(chartValue(values, 0), null)
 })
 
@@ -62,8 +64,8 @@ test('removing dataset metadata retains deliberate chart loading, empty and erro
   assert.match(view, /Фрагменты расшифровок/)
 })
 
-test('displayed burnout copy omits demo labels without changing data or scale limitations', async () => {
-  const demoWords = /сценари|демонстраци|тестов|\bmock\b|\bdemo\b|MVP|условн|примера/iu
+test('displayed copy omits demo banners and explains technical ordering in chart help', async () => {
+  const demoWords = /сценари|демонстраци|тестов|\bmock\b|\bdemo\b|MVP|примера/iu
   const displayedData = JSON.stringify({context:burnoutDemoData.context,decision:burnoutDemoData.decision,trajectory:burnoutDemoData.trajectory,metrics:burnoutDemoData.metrics,workload:burnoutDemoData.workload,actions:burnoutDemoData.actions})
   assert.doesNotMatch(displayedData, demoWords)
   for (const file of ['views/BurnoutView.vue', 'components/PeriodComparison.vue']) {
@@ -72,10 +74,12 @@ test('displayed burnout copy omits demo labels without changing data or scale li
     assert.doesNotMatch(template, demoWords)
   }
   const app = await readFile(new URL('../src/App.vue', import.meta.url), 'utf8')
-  assert.match(app, /'Выгорание \| OKK'/)
+  assert.match(app, /'Динамика разговоров \| OKK'/)
   assert.doesNotMatch(app, /Выгорание — демонстрация/)
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
   assert.doesNotMatch(html, demoWords)
   const help = await readFile(new URL('../src/components/PeriodComparison.vue', import.meta.url), 'utf8')
   assert.match(help, /не проценты вероятности и не результат диагностики/)
+  assert.match(help, /Даты условные: записи распределены/)
+  assert.match(help, /не является оценкой человека/)
 })

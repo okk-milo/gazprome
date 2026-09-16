@@ -35,7 +35,7 @@ let antifraudInitialized = false
 
 function syncPageWithHash(): void {
   activePage.value = pageFromHash(window.location.hash)
-  document.title = activePage.value === 'burnout' ? 'Выгорание | OKK' : 'Антифрод | OKK'
+  document.title = activePage.value === 'burnout' ? 'Динамика разговоров | OKK' : 'Антифрод | OKK'
   if (activePage.value === 'antifraud') void initializeAntifraud()
 }
 
@@ -420,12 +420,12 @@ function dismissToast(id: number): void {
     <header class="app-header">
       <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
       <div class="header-copy">
-        <p class="eyebrow">{{ activePage === 'burnout' ? 'Благополучие сотрудников · линия поддержки' : 'Антифрод · анализ звонков' }}</p>
-        <h1>{{ activePage === 'burnout' ? 'Состояние сотрудника' : 'Оценка риска воздействия мошенников' }}</h1>
+        <p class="eyebrow">{{ activePage === 'burnout' ? 'Технический анализ · линия поддержки' : 'Антифрод · анализ звонков' }}</p>
+        <h1>{{ activePage === 'burnout' ? 'Динамика разговоров' : 'Оценка риска воздействия мошенников' }}</h1>
       </div>
       <nav class="page-switcher" aria-label="Разделы анализа">
         <a href="#antifraud" :aria-current="activePage === 'antifraud' ? 'page' : undefined">Антифрод</a>
-        <a href="#burnout" :aria-current="activePage === 'burnout' ? 'page' : undefined">Выгорание</a>
+        <a href="#burnout" :aria-current="activePage === 'burnout' ? 'page' : undefined">Динамика</a>
       </nav>
     </header>
 
