@@ -39,6 +39,10 @@
   .burnout-demo .weekly-chart__week { font-size: 10px; }
 }
 
+@media (max-width: 360px) {
+  .burnout-demo .weekly-chart__fill strong { font-size: 10px; }
+}
+
 .burnout-demo .context-pills {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
